@@ -3575,7 +3575,8 @@
             contentDiv.innerHTML = '<div class="browser-loading">Загрузка через прокси...</div>';
 
             // Собираем адрес прокси (локальный)
-            const proxyUrl = 'http://localhost:8080/proxy?url=' + encodeURIComponent(url);
+            const proxyUrl = 'https://blumbos.onrender.com/proxy?url=' + encodeURIComponent(url);
+            console.log(proxyUrl);
 
             // Попробуем получить HTML через fetch (требует CORS на прокси). Если fetch проходит,
             // используем iframe.srcdoc, чтобы избежать проблем с загрузкой оригинальных заголовков.

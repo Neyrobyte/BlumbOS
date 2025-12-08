@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        :root {
+            --primary: #00ff41;
+            --secondary: #008f11;
+            --graysecondary: #739177;
+            --black: #030b1d;
+            --darkgray: #15191b;
+            --light: #cccccc;
+            --border: #474747;
+        }
+
+        /* Сброс стилей */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+            font-size: 16px;
+            background-color: var(--black);
+            color: #d6d6d6;
+            margin: 10%;
+            display: flex;
+            justify-content: center;
+            /* text-align: center; */
+        }
+
+        .hdm {
+            background-color: #002b3f;
+            display: flex;
+            /* justify-content: center; */
+            /* text-align: center; */
+            width: 120vh;
+            height: 60vh;
+            border: 2.8px #5b6879 solid;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .hdm iframe {
+            margin: auto;
+            height: 100%;
+            width: 100%;
+            border: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="hdm">
+        <!-- <p>rewrewr</p> -->
+        <iframe src="https://blumbos.onrender.com/proxy?url=https://example.com"></iframe>
+    </div>
+</body>
+
+</html>

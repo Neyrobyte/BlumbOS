@@ -22,7 +22,16 @@ app.get('/proxy', async (req, res) => {
     // Copy headers except security headers that block embedding
     response.headers.forEach((value, name) => {
       const lname = name.toLowerCase();
-      if (lname === 'x-frame-options' || lname === 'content-security-policy' || lname === 'content-security-policy-report-only' || lname === 'x-content-type-options' || lname === 'set-cookie') return;
+      if (
+        lname === 'x-frame-options' ||
+        lname === 'content-security-policy' ||
+        lname === 'content-security-policy-report-only' ||
+        lname === 'x-content-type-options' ||
+        lname === 'set-cookie' ||
+        lname === 'content-encoding' ||  // <--- добавить
+        lname === 'content-length'       // <--- добавить
+      ) return;
+
       try { res.setHeader(name, value); } catch (e) { /* ignore invalid headers */ }
     });
 
