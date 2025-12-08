@@ -1,0 +1,4237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlumbOS Desktop</title>
+    <style>
+        :root {
+            /* Основные цвета */
+            --purple: #772953;
+            --purple-2: #a34d78;
+            --purple-3: #c973a1;
+            --orange: #e95420;
+            --orange-2: #ff6b35;
+            --orange-3: #ff8c42;
+            --orange-30: rgba(233, 84, 32, 0.3);
+            --orange-20: rgba(233, 84, 32, 0.2);
+            --orange-10: rgba(233, 84, 32, 0.1);
+            --yellow: #ffbd2e;
+            --green: #28ca42;
+            --dark-1: #2c001e;
+            --dark-2: #4a1e35;
+            --dark-3: #1a1a1a;
+            --white: #ffffff;
+            --muted: #cccccc;
+            --gray: #614960;
+            --offwhite: #f5f5f5;
+
+            /* Оттенки с прозрачностью */
+            --white-30: rgba(255, 255, 255, 0.3);
+            --white-25: rgba(255, 255, 255, 0.25);
+            --white-20: rgba(255, 255, 255, 0.2);
+            --white-10: rgba(255, 255, 255, 0.1);
+            --white-06: rgba(255, 255, 255, 0.06);
+
+            --purple-90: rgba(119, 41, 83, 0.9);
+            --orange-90: rgba(233, 84, 32, 0.9);
+            --purple-80: rgba(119, 41, 83, 0.8);
+            --orange-80: rgba(233, 84, 32, 0.8);
+
+            /* Синяя тема */
+            --blue-1: #1e3a8a;
+            --blue-2: #3b82f6;
+            --blue-3: #60a5fa;
+            --blue-90: rgba(30, 58, 138, 0.9);
+            --blue-80: rgba(59, 130, 246, 0.8);
+
+            /* Темная тема */
+            --dark-4: #2a2a2a;
+            --dark-90: rgba(26, 26, 26, 0.9);
+            --dark-80: rgba(42, 42, 42, 0.8);
+
+            /* Прочие */
+            --black-50: rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Ubuntu', Arial, sans-serif;
+
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--purple) 0%, var(--orange) 50%, var(--purple) 100%);
+            height: 100vh;
+            overflow: hidden;
+            color: var(--white);
+        }
+
+        /* Панель задач */
+        .taskbar {
+            background: linear-gradient(90deg, var(--purple-90) 0%, var(--orange-90) 100%);
+            height: 40px;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--white-20);
+        }
+
+        .app-window.minimized {
+            display: none;
+        }
+
+        .taskbar-item {
+            content: "";
+            position: relative;
+            /* left: 0;
+            right: 0; */
+            /* height: 1px; */
+            pointer-events: none;
+            /* Градиент от центра к бокам: в центре — непрозрачный стандартный цвет,
+               по бокам — тот же цвет с высокой прозрачностью */
+            background: radial-gradient(ellipse at center,
+                    rgba(182, 0, 0, 0.95) 0%,
+                    /* центр — почти непрозрачный (стандартный оттенок) */
+                    rgba(7, 184, 66, 0.959) 18%,
+                    /* переход к более прозрачному */
+                    rgba(255, 255, 255, 0.0) 100%
+                    /* края — высокий уровень прозрачности */
+                );
+            padding: 5px 10px;
+            /* Убираем прежние жёсткие границы, они будут рисоваться псевдоэлементами */
+            border-top: none;
+            border-bottom: none;
+            border-left: none;
+            margin: 0 5px;
+            cursor: pointer;
+            font-size: 12px;
+            color: var(--white);
+            overflow: hidden;
+        }
+
+        /* Тонкие границы сверху/снизу с аналогичным горизонтальным градиентом,
+           но с чуть меньшей непрозрачностью по бокам */
+        .taskbar-item::before,
+        .taskbar-item::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 1px;
+            pointer-events: none;
+            background: linear-gradient(90deg,
+                    rgba(255, 255, 255, 0.06) 0%,
+                    /* край — очень прозрачный */
+                    rgba(255, 255, 255, 0.65) 50%,
+                    /* центр границы — более выраженный */
+                    rgba(255, 255, 255, 0.06) 100%
+                    /* другой край */
+                );
+            opacity: 0.9;
+        }
+
+        .taskbar-item::before {
+            top: 0;
+        }
+
+        .taskbar-item::after {
+            bottom: 0;
+        }
+
+        .taskbar-item.active {
+            background: linear-gradient(90deg,
+                    rgba(255, 255, 255, 0.06) 0%,
+                    /* край — очень прозрачный */
+                    rgba(255, 255, 255, 0.65) 50%,
+                    /* центр границы — более выраженный */
+                    rgba(255, 255, 255, 0.06) 100%
+                    /* другой край */
+                );
+        }
+
+        .launcher {
+            background: linear-gradient(135deg, var(--orange-2), var(--orange));
+            width: 35px;
+            height: 35px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            cursor: pointer;
+            border: none;
+            color: var(--white);
+            font-weight: bold;
+        }
+
+        .dock {
+            display: flex;
+            gap: 10px;
+        }
+
+        .dock-item {
+            width: 35px;
+            height: 35px;
+            background: linear-gradient(135deg, var(--white-20), var(--white-10));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid var(--white-10);
+        }
+
+        .dock-item:hover {
+            transform: translateY(-5px);
+            background: linear-gradient(135deg, var(--white-30), var(--white-20));
+        }
+
+        .dock-item.active {
+            background: linear-gradient(135deg, var(--orange), var(--orange-2));
+        }
+
+        /* Рабочий стол */
+        .desktop {
+            padding: 20px;
+            height: calc(100vh - 40px);
+            display: grid;
+            grid-template-columns: repeat(auto-fill, 80px);
+            grid-auto-rows: 90px;
+            gap: 20px;
+        }
+
+        .desktop-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .desktop-icon:hover {
+            background: var(--white-10);
+        }
+
+        .icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .icon-text {
+            font-size: 12px;
+            text-align: center;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Окно терминала */
+        .terminal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 400px;
+            background: linear-gradient(135deg, var(--dark-1) 0%, var(--dark-2) 100%);
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border: 1px solid var(--white-10);
+        }
+
+        .terminal-header {
+            background: linear-gradient(90deg, var(--purple), var(--orange));
+            height: 30px;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            border-bottom: 1px solid var(--white-10);
+        }
+
+        .terminal-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .terminal-button {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .close {
+            background: #ff5f57;
+        }
+
+        .minimize {
+            background: var(--yellow);
+        }
+
+        .maximize {
+            background: var(--green);
+        }
+
+        .terminal-body {
+            padding: 20px;
+            height: calc(100% - 30px);
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: var(--white);
+            overflow-y: auto;
+            max-height: 370px;
+            line-height: 1;
+            white-space: pre;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .terminal-body::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .terminal-body::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--orange), var(--purple));
+            border-radius: 4px;
+        }
+
+        .terminal-body::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, var(--orange-2), var(--purple-2));
+        }
+
+        .prompt {
+            color: var(--orange);
+        }
+
+        .command {
+            color: var(--white);
+        }
+
+        .output {
+            color: var(--muted);
+            margin-top: 10px;
+        }
+
+        /* Стили для окон приложений */
+        .app-window {
+            position: absolute;
+            top: 100px;
+            left: 100px;
+            width: 600px;
+            height: 400px;
+            background: linear-gradient(135deg, var(--dark-1) 0%, var(--dark-2) 100%);
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border: 1px solid var(--white-10);
+            display: none;
+            z-index: 100;
+            min-width: 400px;
+            min-height: 300px;
+        }
+
+        .window-header {
+            background: linear-gradient(90deg, var(--purple), var(--orange));
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            border-bottom: 1px solid var(--white-10);
+            cursor: move;
+        }
+
+        .window-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .window-button {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .window-close {
+            background: #ff5f57;
+        }
+
+        .window-minimize {
+            background: var(--yellow);
+        }
+
+        .window-maximize {
+            background: var(--green);
+        }
+
+        .window-title {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        /* Активное окно */
+        .app-window.active {
+            display: block;
+        }
+
+        /* Затемнение фона */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--black-50);
+            display: none;
+            z-index: 99;
+        }
+
+        .overlay.active {
+            display: block;
+        }
+
+        .setting-item {
+            margin: 15px 0;
+            padding: 10px;
+            background: var(--white-10);
+            border-radius: 8px;
+        }
+
+        .setting-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .setting-control {
+            width: 100%;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid var(--white-25);
+            background: rgba(0, 0, 0, 0.3);
+            background-color: var(--dark-2);
+            /* Не менять! */
+            color: var(--white);
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .slider {
+            flex: 1;
+            height: 5px;
+            background: var(--white-20);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .slider-value {
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--white-20);
+            border-radius: 24px;
+            transition: .4s;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background: var(--white);
+            border-radius: 50%;
+            transition: .4s;
+        }
+
+        .toggle-checkbox:checked+.toggle-slider {
+            background: linear-gradient(135deg, var(--orange), var(--orange-2));
+        }
+
+        .toggle-checkbox:checked+.toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .color-picker {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: transparent;
+        }
+
+        .button {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, var(--orange), var(--orange-2));
+            border: none;
+            border-radius: 8px;
+            color: var(--white);
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        .button:hover {
+            background: linear-gradient(135deg, var(--orange-2), var(--orange-3));
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--white-20);
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            border-bottom: 2px solid var(--orange);
+            color: var(--orange);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Системная информация */
+        .system-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--white-10);
+        }
+
+        .clock {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .system-stats {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .window-content {
+            padding: 20px;
+            height: calc(100% - 30px);
+            color: var(--white);
+            overflow-y: auto;
+        }
+
+        .window-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .window-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .window-content::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--orange), var(--purple));
+            border-radius: 4px;
+        }
+
+        .window-content::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, var(--orange-2), var(--purple-2));
+        }
+
+        /* Стили для игр */
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+        }
+
+        .game-canvas {
+            border: 2px solid var(--orange);
+            border-radius: 10px;
+            background: var(--dark-3);
+        }
+
+        .game-controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .game-stats {
+            margin-top: 10px;
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .game-selector {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .game-card {
+            background: var(--white-10);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .game-card:hover {
+            background: var(--white-20);
+            transform: translateY(-2px);
+        }
+
+        /* Ручки для изменения размера */
+        .resize-handle {
+            position: absolute;
+            background: transparent;
+            z-index: 10;
+        }
+
+        .resize-handle-bottom-right {
+            width: 15px;
+            height: 15px;
+            bottom: 0;
+            right: 0;
+            cursor: nwse-resize;
+        }
+
+        .resize-handle-bottom {
+            width: calc(100% - 30px);
+            height: 5px;
+            bottom: 0;
+            left: 15px;
+            cursor: ns-resize;
+        }
+
+        .resize-handle-right {
+            width: 5px;
+            height: calc(100% - 30px);
+            right: 0;
+            top: 15px;
+            cursor: ew-resize;
+        }
+
+        /* Для окон с играми увеличим минимальную высоту */
+        #games-window {
+            min-width: 500px;
+            min-height: 500px;
+        }
+
+        .app-window.maximized {
+            border-radius: 0;
+            resize: none;
+        }
+
+        .app-window.maximized .resize-handle {
+            display: none;
+        }
+
+        .folder-icon {
+            padding: 10px;
+            background: var(--white-10);
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .folder-icon:hover {
+            background: var(--white-20);
+        }
+
+        #notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--orange);
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: none;
+            z-index: 1000;
+            color: var(--white);
+            font-weight: bold;
+        }
+
+        .pong-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: center;
+        }
+
+        #pong-canvas {
+            border: 2px solid var(--orange);
+            border-radius: 10px;
+            background: var(--dark-3);
+        }
+
+
+        .pong-controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .pong-stats {
+            margin-top: 10px;
+            font-size: 14px;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        .pong-instructions {
+            margin-top: 10px;
+            font-size: 12px;
+            color: var(--offwhite);
+            text-align: center;
+        }
+
+        .ascii-logo {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.15);
+            white-space: pre;
+            z-index: -1;
+            pointer-events: none;
+            text-align: center;
+            line-height: 1.2;
+            font-weight: bold;
+            text-shadow:
+                0 0 10px var(--orange-30),
+                0 0 20px var(--orange-20),
+                0 0 30px var(--orange-10);
+            user-select: none;
+            filter: contrast(1.2);
+        }
+
+        .toggle-checkbox {
+            width: 0px;
+            height: 0px;
+        }
+
+        /* Стили для браузера */
+        .browser-toolbar {
+            background: linear-gradient(90deg, var(--purple-80), var(--orange-80));
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--white-10);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .browser-nav-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .browser-nav-btn {
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            color: var(--white);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.2s ease;
+        }
+
+        .browser-nav-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .browser-nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .browser-address-bar {
+            flex: 1;
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            min-width: 200px;
+        }
+
+        .browser-address-input {
+            flex: 1;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            color: var(--white);
+            font-size: 12px;
+        }
+
+        .browser-address-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .browser-address-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.25);
+            border-color: #e95420;
+        }
+
+        .browser-search-btn {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--orange), var(--orange-2));
+            border: none;
+            border-radius: 6px;
+            color: var(--white);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .browser-search-btn:hover {
+            background: linear-gradient(135deg, #ff6b35, #ff8c42);
+        }
+
+        .browser-body {
+            padding: 0;
+            height: calc(100% - 60px);
+            overflow: hidden;
+            background: #2c001e;
+        }
+
+        .browser-content {
+            width: 100%;
+            height: 100%;
+            background: var(--white);
+            color: #333;
+            overflow: auto;
+        }
+
+        .browser-content iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .browser-home-page {
+            padding: 40px 20px;
+            text-align: center;
+            background: linear-gradient(135deg, var(--offwhite) 0%, var(--white) 100%);
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .browser-home-logo {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .browser-home-title {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .browser-home-subtitle {
+            font-size: 16px;
+            color: var(--gray);
+            margin-bottom: 40px;
+        }
+
+        .browser-quicklinks {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .browser-quicklink {
+            background: var(--white);
+            border: 2px solid var(--orange);
+            border-radius: 10px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: #333;
+        }
+
+        .browser-quicklink:hover {
+            background: var(--orange);
+            color: var(--white);
+            transform: translateY(-5px);
+        }
+
+        .browser-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            font-size: 18px;
+            color: var(--gray);
+        }
+
+        .browser-loading::after {
+            content: '';
+            width: 20px;
+            height: 20px;
+            margin-left: 10px;
+            border: 3px solid #e95420;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Меню файла (троеточие) */
+        .item-container {
+            position: relative;
+        }
+
+        .menu-button {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            /* background: rgba(0,0,0,0.25); */
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .menu-button:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .file-menu {
+            position: absolute;
+            top: 38px;
+            right: 6px;
+            background: linear-gradient(135deg, var(--dark-1) 0%, var(--dark-2) 100%);
+            border: 1px solid var(--white-06);
+            border-radius: 6px;
+            padding: 6px 0;
+            min-width: 140px;
+            z-index: 130;
+            display: none;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+        }
+
+        .file-menu button {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: var(--white);
+            padding: 8px 12px;
+            text-align: left;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .file-menu button:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .calc-buttons .button {
+            text-shadow:
+                -0.6px -0.6px 0 #000,
+                0.6px -0.6px 0 #000,
+                -0.6px 0.6px 0 #000,
+                0.6px 0.6px 0 #000;
+            font-size: 16px;
+            border: 1px solid var(--gray);
+            border-radius: 0.8vh;
+
+        }
+
+        #calculator-window {
+            overflow: hidden;
+            height: auto;
+        }
+
+        .taskbarr {
+            display: flex;
+            height: 80%;
+            padding-top: 5px;
+            /* padding-bottom: 5px; */
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Рабочий стол -->
+    <div class="desktop">
+        <div class="desktop-icon" onclick="openApp('files')">
+            <div class="icon" style="background: linear-gradient(135deg, var(--orange), var(--orange-2));">📁</div>
+            <div class="icon-text">Файлы</div>
+        </div>
+        <div class="desktop-icon" onclick="openApp('browser')">
+            <div class="icon" style="background: linear-gradient(135deg, var(--purple), var(--purple-2));">🌐</div>
+            <div class="icon-text">Браузер</div>
+        </div>
+        <div class="desktop-icon" onclick="openApp('games')">
+            <div class="icon" style="background: linear-gradient(135deg, var(--orange-2), var(--orange-3));">🎮</div>
+            <div class="icon-text">Игры</div>
+        </div>
+        <div class="desktop-icon" onclick="openApp('settings')">
+            <div class="icon" style="background: linear-gradient(135deg, var(--purple-2), var(--purple-3));">⚙️</div>
+            <div class="icon-text">Настройки</div>
+        </div>
+    </div>
+
+    <!-- Системная информация -->
+    <div class="system-info">
+        <div class="clock" id="clock">14:30:25</div>
+        <div class="system-stats">
+            <div>CPU: 24% | RAM: 3.2/8GB</div>
+            <div>BlumbOS 22.04 LTS</div>
+        </div>
+    </div>
+
+    <!-- Панель задач -->
+    <div class="taskbar">
+        <button class="launcher" onclick="showNotification('Меню приложений BlumbOS!')"><img
+                src="./res/windows-svgrepo-com.svg" width="100%" height="100%" alt=""></button>
+        <div class="dock">
+            <div class="dock-item" onclick="openApp('files')">📁</div>
+            <div class="dock-item" onclick="openApp('browser')">🌐</div>
+            <div class="dock-item" onclick="showTerminal()">💻</div>
+            <div class="dock-item" onclick="openApp('calculator')">🧮</div>
+            <div class="dock-item" onclick="showNotification('Музыка еще не реализована!')">🎵</div>
+            <div class="dock-item" onclick="showNotification('Камера еще не реализована!')">📷</div>
+            <div class="taskbarr" id="taskbar-apps"></div>
+        </div>
+    </div>
+
+    <!-- Окно терминала -->
+    <div class="terminal" id="terminal-window">
+        <div class="terminal-header">
+            <div class="terminal-buttons">
+                <div class="terminal-button close"></div>
+                <div class="terminal-button minimize"></div>
+                <div class="terminal-button maximize"></div>
+            </div>
+        </div>
+        <div class="terminal-body">
+            <div>BlumbOS Terminal v2.1.4</div>
+            <div class="output">Добро пожаловать в BlumbOS!</div>
+            <br>
+            <div>
+                <span class="prompt">user@blumbos:~$</span>
+                <span class="command"> neofetch</span>
+            </div>
+            <div class="output">
+                <pre style="font-family: 'Courier New', monospace; font-size: 12px; line-height: 1;">
+        ██████╗ ██╗     ██╗   ██╗███╗   ███╗██████╗  ██████╗ ███████╗
+        ██╔══██╗██║     ██║   ██║████╗ ████║██╔══██╗██╔═══██╗██╔════╝
+        ██████╔╝██║     ██║   ██║██╔████╔██║██████╔╝██║   ██║███████╗
+        ██╔══██╗██║     ██║   ██║██║╚██╔╝██║██╔══██╗██║   ██║╚════██║
+        ██████╔╝███████╗╚██████╔╝██║ ╚═╝ ██║██████╔╝╚██████╔╝███████║
+        ╚═════╝ ╚══════╝ ╚═════╝ ╚═╝     ╚═╝╚═════╝  ╚═════╝ ╚══════╝
+
+        OS: BlumbOS 22.04 LTS
+        Kernel: 5.15.0-blumbos
+        Shell: blumbash 5.1.16
+        DE: BlumbGNOME 42.5
+        CPU: AMD Ryzen 7 5800X (16) @ 3.800GHz
+        GPU: NVIDIA GeForce RTX 3080
+        Memory: 3245MiB / 15985MiB
+
+        by Teplishchev M. Isip-205
+
+        (есть недоработки, прошу понять и простить)
+                </pre>
+            </div>
+
+            <div>
+                <span class="prompt">user@blumbos:~$</span>
+                <span class="command"> ls -la</span>
+            </div>
+            <div class="output">
+                total 64<br>
+                drwxr-xr-x 18 user user 4096 Dec 10 14:30 .<br>
+                drwxr-xr-x 3 root root 4096 Nov 15 09:20 ..<br>
+                -rw------- 1 user user 1256 Dec 9 16:45 .bash_history<br>
+                drwxr-xr-x 2 user user 4096 Dec 8 11:15 Documents<br>
+                drwxr-xr-x 2 user user 4096 Dec 7 14:20 Downloads<br>
+                drwxr-xr-x 2 user user 4096 Dec 6 10:35 Music<br>
+                drwxr-xr-x 2 user user 4096 Dec 5 13:45 Pictures<br>
+            </div>
+
+            <div>
+                <span class="prompt">user@blumbos:~$</span>
+                <span class="command"> ps aux | grep blumb</span>
+            </div>
+            <div class="output">
+                user 12547 0.3 1.2 2156784 198452 ? SLl 14:25 0:45 /usr/bin/blumb-shell<br>
+                user 12589 0.1 0.8 1123456 132456 ? SLl 14:25 0:23 /usr/lib/blumbos/blumb-service<br>
+                user 12634 0.0 0.3 891234 56789 ? S 14:26 0:05 blumb-daemon --start<br>
+            </div>
+
+            <div>
+                <span class="prompt">user@blumbos:~$</span>
+                <span class="command"> df -h</span>
+            </div>
+            <div class="output">
+                Filesystem Size Used Avail Use% Mounted on<br>
+                /dev/sda1 467G 156G 288G 36% /<br>
+                /dev/sda2 1.9T 856G 952G 48% /home<br>
+                tmpfs 16G 2.1G 14G 14% /tmp<br>
+            </div>
+
+            <div>
+                <span class="prompt">user@blumbos:~$</span>
+                <span class="command"> _</span>
+            </div>
+        </div>
+        <div class="resize-handle resize-handle-bottom"></div>
+        <div class="resize-handle resize-handle-right"></div>
+        <div class="resize-handle resize-handle-bottom-right"></div>
+        <div class="resize-handle resize-handle-left"></div>
+        <div class="resize-handle resize-handle-left"></div>
+        <div class="resize-handle resize-handle-left"></div>
+        <div class="resize-handle resize-handle-left"></div>
+        <div class="resize-handle resize-handle-left"></div>
+        <div class="resize-handle resize-handle-left"></div>
+        <div class="resize-handle resize-handle-left"></div>
+    </div>
+
+    <!-- Окно файлового менеджера -->
+    <div class="app-window" id="files-window">
+        <div class="window-header">
+            <div class="window-buttons">
+                <div class="window-button window-close" onclick="closeApp('files')"></div>
+                <div class="window-button window-minimize" onclick="minimizeApp('files')"></div>
+                <div class="window-button window-maximize" onclick="toggleMaximize('files')"></div>
+            </div>
+            <div class="window-title">Файловый менеджер</div>
+            <div style="width: 60px;"></div>
+        </div>
+        <div class="window-content">
+            <h3 id="files-title">Домашняя папка</h3>
+
+            <div id="files-toolbar" style="display:flex; gap:8px; margin-top:10px;">
+                <button class="button" id="btn-new-folder">Новая папка</button>
+                <button class="button" id="btn-new-file">Новый текстовый файл</button>
+                <button class="button" id="btn-up" style="background: var(--gray)">Назад</button>
+            </div>
+
+            <div id="files-root"
+                style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 20px;"></div>
+
+            <!-- Редактор текстовых файлов -->
+            <div id="editor-modal"
+                style="display:none; position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index:120; background: linear-gradient(135deg, var(--dark-1) 0%, var(--dark-2) 100%); border-radius:12px; width:600px; height:400px; box-shadow:0 20px 40px rgba(0,0,0,0.6);">
+                <div
+                    style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background: linear-gradient(90deg, var(--purple), var(--orange)); border-bottom:1px solid var(--white-06);">
+                    <div id="editor-filename" style="font-weight:bold; color:var(--white)"></div>
+                    <div>
+                        <button class="button" id="editor-save">Сохранить</button>
+                        <button class="button" id="editor-close" style="background: var(--gray)">Закрыть</button>
+                    </div>
+                </div>
+                <textarea id="editor-text"
+                    style="width:100%; height:calc(100% - 52px); padding:12px; border:none; resize:none; background:var(--dark-3); color:var(--white); font-family: monospace; font-size:14px;"></textarea>
+            </div>
+        </div>
+        <div class="resize-handle resize-handle-bottom"></div>
+        <div class="resize-handle resize-handle-right"></div>
+        <div class="resize-handle resize-handle-bottom-right"></div>
+    </div>
+
+    <!-- Окно браузера -->
+    <div class="app-window" id="browser-window">
+        <div class="window-header">
+            <div class="window-buttons">
+                <div class="window-button window-close" onclick="closeApp('browser')"></div>
+                <div class="window-button window-minimize" onclick="minimizeApp('browser')"></div>
+                <div class="window-button window-maximize" onclick="toggleMaximize('browser')"></div>
+            </div>
+            <div class="window-title">BlumbBrowser</div>
+            <div style="width: 60px;"></div>
+        </div>
+
+        <!-- Браузер тулбар -->
+        <div class="browser-toolbar">
+            <div class="browser-nav-buttons">
+                <button class="browser-nav-btn" id="browser-back" onclick="browserNavigateBack()"
+                    title="Назад">←</button>
+                <button class="browser-nav-btn" id="browser-forward" onclick="browserNavigateForward()"
+                    title="Вперед">→</button>
+                <button class="browser-nav-btn" onclick="browserReload()" title="Обновить">⟳</button>
+                <button class="browser-nav-btn" onclick="browserHome()" title="На главную">🏠</button>
+            </div>
+            <div class="browser-address-bar">
+                <input type="text" class="browser-address-input" id="browser-address"
+                    placeholder="Введите URL или поисковый запрос..."
+                    onkeypress="if(event.key === 'Enter') browserNavigate()">
+                <button class="browser-search-btn" onclick="browserNavigate()" title="Перейти">🔍</button>
+            </div>
+        </div>
+
+        <!-- Содержимое браузера -->
+        <div class="browser-body">
+            <div id="browser-content" class="browser-content">
+                <div class="browser-home-page" id="browser-home">
+                    <div class="browser-home-logo">🌐</div>
+                    <h1 class="browser-home-title">BlumbBrowser</h1>
+                    <p class="browser-home-subtitle">Введите URL или выполните поиск</p>
+                    <div class="browser-quicklinks">
+                        <a href="javascript:void(0)" onclick="browserSearch('GitHub')" class="browser-quicklink">
+                            <div style="font-size: 24px; margin-bottom: 10px;">💻</div>
+                            <div>GitHub</div>
+                        </a>
+                        <a href="javascript:void(0)" onclick="browserSearch('Stack Overflow')"
+                            class="browser-quicklink">
+                            <div style="font-size: 24px; margin-bottom: 10px;">📚</div>
+                            <div>Stack Overflow</div>
+                        </a>
+                        <a href="javascript:void(0)" onclick="browserNavigateTo('https://www.wikipedia.org')"
+                            class="browser-quicklink">
+                            <div style="font-size: 24px; margin-bottom: 10px;">📖</div>
+                            <div>Wikipedia</div>
+                        </a>
+                        <a href="javascript:void(0)" onclick="browserSearch('MDN Web Docs')" class="browser-quicklink">
+                            <div style="font-size: 24px; margin-bottom: 10px;">🎓</div>
+                            <div>MDN Docs</div>
+                        </a>
+                        <a href="javascript:void(0)" onclick="browserSearch('YouTube')" class="browser-quicklink">
+                            <div style="font-size: 24px; margin-bottom: 10px;">📺</div>
+                            <div>YouTube</div>
+                        </a>
+                        <a href="javascript:void(0)" onclick="browserSearch('Reddit')" class="browser-quicklink">
+                            <div style="font-size: 24px; margin-bottom: 10px;">💬</div>
+                            <div>Reddit</div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="resize-handle resize-handle-bottom"></div>
+        <div class="resize-handle resize-handle-right"></div>
+        <div class="resize-handle resize-handle-bottom-right"></div>
+    </div>
+
+    <!-- Окно настроек -->
+    <div class="app-window" id="settings-window">
+        <div class="window-header">
+            <div class="window-buttons">
+                <div class="window-button window-close" onclick="closeApp('settings')"></div>
+                <div class="window-button window-minimize" onclick="minimizeApp('settings')"></div>
+                <div class="window-button window-maximize" onclick="toggleMaximize('settings')"></div>
+            </div>
+            <div class="window-title">Настройки BlumbOS</div>
+            <div style="width: 60px;"></div>
+        </div>
+        <div class="window-content">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('system-tab', event)">Система</div>
+                <div class="tab" onclick="switchTab('appearance-tab', event)">Внешний вид</div>
+                <div class="tab" onclick="switchTab('network-tab', event)">Сеть</div>
+            </div>
+
+            <div id="system-tab" class="tab-content active">
+                <h3>Системные настройки</h3>
+
+                <div class="setting-item">
+                    <label class="setting-label">Язык системы</label>
+                    <select class="setting-control" onchange="changeLanguage(this.value)">
+                        <option value="ru">Русский</option>
+                        <option value="en">English</option>
+                        <option value="es">Español</option>
+                    </select>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Раскладка клавиатуры</label>
+                    <select class="setting-control">
+                        <option>Русская</option>
+                        <option>Английская (US)</option>
+                    </select>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Автозагрузка</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="toggle-checkbox" onchange="toggleAutostart(this.checked)">
+                            <span style="size: 0px;" class="toggle-slider"></span>
+                        </label>
+                        <span>Запускать BlumbOS при включении</span>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Обновления системы</label>
+                    <button class="button" onclick="checkUpdates()">Проверить обновления</button>
+                    <div id="update-status" style="margin-top: 10px; font-size: 12px;"></div>
+                </div>
+            </div>
+
+            <div id="appearance-tab" class="tab-content">
+                <h3>Настройки внешнего вида</h3>
+
+                <div class="setting-item">
+                    <label class="setting-label">Цветовая тема</label>
+                    <select class="setting-control" onchange="changeTheme(this.value)">
+                        <option value="orange">Оранжевый градиент</option>
+                        <option value="purple">Фиолетовый градиент</option>
+                        <option value="blue">Синий градиент</option>
+                        <option value="dark">Темная</option>
+                    </select>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Прозрачность окон</label>
+                    <div class="slider-container">
+                        <input type="range" min="0" max="100" value="80" class="slider"
+                            oninput="updateTransparency(this.value)">
+                        <span class="slider-value" id="transparency-value">80%</span>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Размер шрифта</label>
+                    <div class="slider-container">
+                        <input type="range" min="12" max="24" value="16" class="slider"
+                            oninput="updateFontSize(this.value)">
+                        <span class="slider-value" id="fontsize-value">16px</span>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Анимации</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="toggle-checkbox" checked
+                                onchange="toggleAnimations(this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span>Включить анимации интерфейса</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="network-tab" class="tab-content">
+                <h3>Сетевые настройки</h3>
+
+                <div class="setting-item">
+                    <label class="setting-label">Wi-Fi подключение</label>
+                    <select class="setting-control">
+                        <option>BlumbOS-Network (подключено)</option>
+                        <option>Guest-WiFi</option>
+                        <option>Office-Network</option>
+                    </select>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Скорость интернета</label>
+                    <button class="button" onclick="testSpeed()">Протестировать скорость</button>
+                    <div id="speed-result" style="margin-top: 10px; font-size: 12px;"></div>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">VPN</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="toggle-checkbox" onchange="toggleVPN(this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span>Включить VPN соединение</span>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Сетевой монитор</label>
+                    <button class="button" onclick="showNetworkInfo()">Показать статистику</button>
+                    <div id="network-info" style="margin-top: 10px; font-size: 12px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="resize-handle resize-handle-bottom"></div>
+        <div class="resize-handle resize-handle-right"></div>
+        <div class="resize-handle resize-handle-bottom-right"></div>
+    </div>
+
+    <!-- Окно игр -->
+    <div class="app-window" id="games-window">
+        <div class="window-header">
+            <div class="window-buttons">
+                <div class="window-button window-close" onclick="closeApp('games')"></div>
+                <div class="window-button window-minimize" onclick="minimizeApp('games')"></div>
+                <div class="window-button window-maximize" onclick="toggleMaximize('games')"></div>
+            </div>
+            <div class="window-title">Игры BlumbOS</div>
+            <div style="width: 60px;"></div>
+        </div>
+        <div class="window-content">
+            <div id="games-menu">
+                <h3>Выберите игру</h3>
+                <div class="game-selector">
+                    <div class="game-card" onclick="startGame('snake')">
+                        <div style="font-size: 32px;">🐍</div>
+                        <div>Змейка</div>
+                    </div>
+                    <div class="game-card" onclick="startGame('tetris')">
+                        <div style="font-size: 32px;">🧊</div>
+                        <div>Тетрис</div>
+                    </div>
+                    <div class="game-card" onclick="startGame('pong')">
+                        <div style="font-size: 32px;">🎾</div>
+                        <div>Понг</div>
+                    </div>
+                    <div class="game-card" onclick="startGame('minesweeper')">
+                        <div style="font-size: 32px;">💣</div>
+                        <div>Сапер</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="snake-game" class="game-container" style="display: none;">
+                <canvas id="snake-canvas" width="400" height="400" class="game-canvas"></canvas>
+                <div class="game-stats">
+                    Счет: <span id="snake-score">0</span> |
+                    Уровень: <span id="snake-level">1</span>
+                </div>
+                <div class="game-controls">
+                    <button class="button" onclick="snakePause()">Пауза</button>
+                    <button class="button" onclick="restartGame('snake')">Заново</button>
+                    <button class="button" onclick="showGamesMenu()">Меню</button>
+                </div>
+            </div>
+
+            <div id="tetris-game" class="game-container" style="display: none;">
+                <canvas id="tetris-canvas" width="300" height="600" class="game-canvas"></canvas>
+                <div class="game-stats">
+                    Счет: <span id="tetris-score">0</span> |
+                    Линии: <span id="tetris-lines">0</span>
+                </div>
+                <div class="game-controls">
+                    <button class="button" onclick="tetrisPause()">Пауза</button>
+                    <button class="button" onclick="restartGame('tetris')">Заново</button>
+                    <button class="button" onclick="showGamesMenu()">Меню</button>
+                </div>
+            </div>
+            <div id="pong-game" class="pong-container" style="display: none;">
+                <canvas id="pong-canvas" width="600" height="400" class="game-canvas"></canvas>
+                <div class="pong-stats">
+                    Игрок 1: <span id="pong-score1">0</span> |
+                    Игрок 2: <span id="pong-score2">0</span>
+                </div>
+                <div class="pong-instructions">
+                    Управление: Игрок 1 (W/S), Игрок 2 (↑/↓) | Пауза: Пробел
+                </div>
+                <div class="pong-controls">
+                    <button class="button" onclick="pausePong()">Пауза</button>
+                    <button class="button" onclick="restartGame('pong')">Заново</button>
+                    <button class="button" onclick="showGamesMenu()">Меню</button>
+                </div>
+            </div>
+            <div id="minesweeper-game" class="game-container"
+                style="display:none; flex-direction:column; align-items:center; justify-content:center;">
+                <div style="margin-bottom:10px; display:flex; gap:10px; align-items:center;">
+                    <span>Мин: <span id="minesweeper-mine-count">10</span></span>
+                    <button class="button" onclick="restartGame('minesweeper')"><img
+                            src="./res/refresh-button-svgrepo-com.svg" width="18rem" height="18rem" alt=""></button>
+                    <span>Время: <span id="minesweeper-timer">0</span> сек</span>
+                </div>
+                <div id="minesweeper-board" style="display:inline-block;"></div>
+                <div id="minesweeper-status"
+                    style="margin-top:10px; font-size:16px; color:var(--orange); font-weight:bold;"></div>
+                <div class="game-controls" style="margin-top:10px;">
+                    <button class="button" onclick="showGamesMenu()">Меню</button>
+                </div>
+            </div>
+        </div>
+        <div class="resize-handle resize-handle-bottom"></div>
+        <div class="resize-handle resize-handle-right"></div>
+        <div class="resize-handle resize-handle-bottom-right"></div>
+    </div>
+
+    <!-- Уведомления -->
+    <!-- Окно калькулятора -->
+    <div class="app-window" id="calculator-window">
+        <div class="window-header">
+            <div class="window-buttons">
+                <div class="window-button window-close" onclick="closeApp('calculator')"></div>
+                <div class="window-button window-minimize" onclick="minimizeApp('calculator')"></div>
+                <div class="window-button window-maximize" onclick="toggleMaximize('calculator')"></div>
+            </div>
+            <div class="window-title">Калькулятор</div>
+            <div style="width: 60px;"></div>
+        </div>
+        <div class="window-content"
+            style="display:flex; flex-direction:column; align-items:center; gap:12px; padding:18px;">
+            <div id="calc" style="width:320px;">
+                <input id="calc-display" type="text" readonly
+                    style="width:100%; height:52px; font-size:20px; text-align:right; padding:10px; border-radius:8px; border:none; background:var(--dark-3); color:var(--white); box-shadow: inset 0 2px 6px rgba(0,0,0,0.6);">
+
+                <div class="calc-buttons"
+                    style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; margin-top:12px;">
+                    <button class="button" data-cmd="clear">C</button>
+                    <button class="button" data-cmd="back">⌫</button>
+                    <button class="button" data-cmd="%">%</button>
+                    <button class="button" data-cmd="/">÷</button>
+
+                    <button class="button" data-cmd="7">7</button>
+                    <button class="button" data-cmd="8">8</button>
+                    <button class="button" data-cmd="9">9</button>
+                    <button class="button" data-cmd="*">×</button>
+
+                    <button class="button" data-cmd="4">4</button>
+                    <button class="button" data-cmd="5">5</button>
+                    <button class="button" data-cmd="6">6</button>
+                    <button class="button" data-cmd="-">−</button>
+
+                    <button class="button" data-cmd="1">1</button>
+                    <button class="button" data-cmd="2">2</button>
+                    <button class="button" data-cmd="3">3</button>
+                    <button class="button" data-cmd="+">+</button>
+
+                    <button class="button" data-cmd="0" style="grid-column: span 2;">0</button>
+                    <button class="button" data-cmd=".">.</button>
+                    <button class="button" data-cmd="=">=</button>
+                </div>
+            </div>
+            <div style="display:flex; gap:8px; width:320px; justify-content:flex-end;">
+                <!-- <button class="button" onclick="showGamesMenu()" style="background:var(--gray)">Меню игр</button> -->
+                <!-- <button class="button" onclick="closeApp('calculator')" style="background:var(--gray)">Закрыть</button> -->
+            </div>
+        </div>
+        <div class="resize-handle resize-handle-bottom"></div>
+        <div class="resize-handle resize-handle-right"></div>
+        <div class="resize-handle resize-handle-bottom-right"></div>
+    </div>
+
+    <div id="notification">Уведомление</div>
+
+    <!-- [НЕ ИСПОЛЬЗУЕТСЯ] Затемнение фона -->
+    <!-- <div class="overlay" id="overlay" onclick="closeAllApps()"></div> -->
+    <script>
+        // Вспомогательная функция для получения CSS-переменных
+        function getCSSVar(varName) {
+            return getComputedStyle(document.documentElement).getPropertyValue(`--${varName}`).trim();
+        }
+
+        // Обновление времени
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+            document.getElementById('clock').textContent = timeString;
+        }
+
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Уведомления
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Логика открытия/закрытия приложений
+        let openWindows = [];
+        let minimizedWindows = [];
+        // Сохранённые состояния окон (left, top, width, height)
+        let windowStates = {};
+        let currentGame = null;
+        let snakeGame = null;
+        let tetrisGame = null;
+        let pongGame = null;
+
+        function openApp(appName) {
+            // Проверяем существование окна
+            const appWindow = document.getElementById(appName + '-window');
+            if (!appWindow) {
+                showNotification(`Приложение "${appName}" еще не реализовано!`);
+                return;
+            }
+
+            // [НЕ ИСПОЛЬЗУЕТСЯ] const overlay = document.getElementById('overlay');
+
+            if (appWindow) {
+                appWindow.classList.add('active');
+                // [НЕ ИСПОЛЬЗУЕТСЯ] overlay.classList.add('active');
+
+                // Показываем окно; восстанавливаем сохранённое состояние если есть
+                appWindow.style.display = 'block';
+                const state = windowStates[appName];
+                if (state) {
+                    appWindow.style.left = state.left;
+                    appWindow.style.top = state.top;
+                    appWindow.style.width = state.width;
+                    appWindow.style.height = state.height;
+                    appWindow.style.transform = 'none';
+                } else {
+                    // Центрируем окно при открытии
+                    appWindow.style.left = '50%';
+                    appWindow.style.top = '50%';
+                    appWindow.style.transform = 'translate(-50%, -50%)';
+                }
+
+                // Добавляем в список открытых окон
+                if (!openWindows.includes(appName)) {
+                    openWindows.push(appName);
+                }
+
+                // Убираем из минимизированных если там был
+                minimizedWindows = minimizedWindows.filter(app => app !== appName);
+
+                updateTaskbar();
+                // Если открыли файловый менеджер — рендерим текущую папку
+                if (appName === 'files') {
+                    renderCurrentFolder();
+                }
+            }
+        }
+
+        function closeApp(appName) {
+            const appWindow = document.getElementById(appName + '-window');
+            // [НЕ ИСПОЛЬЗУЕТСЯ] const overlay = document.getElementById('overlay');
+
+            if (appName === 'games' && currentGame) {
+                if (currentGame === 'snake' && snakeGame) {
+                    snakeGame.stop();
+                } else if (currentGame === 'tetris' && tetrisGame) {
+                    tetrisGame.stop();
+                } else if (currentGame === 'pong' && pongGame) {
+                    pongGame.stop();
+                }
+                currentGame = null;
+            }
+
+            if (appWindow) {
+                appWindow.classList.remove('active');
+            }
+
+            // Убираем из всех списков
+            openWindows = openWindows.filter(app => app !== appName);
+            minimizedWindows = minimizedWindows.filter(app => app !== appName);
+
+            updateTaskbar();
+
+            // [НЕ ИСПОЛЬЗУЕТСЯ] Проверяем, есть ли еще открытые окна
+            // [НЕ ИСПОЛЬЗУЕТСЯ] const openWindowsList = document.querySelectorAll('.app-window.active');
+            // [НЕ ИСПОЛЬЗУЕТСЯ] if (openWindowsList.length === 0) {
+            // [НЕ ИСПОЛЬЗУЕТСЯ]     overlay.classList.remove('active');
+            // [НЕ ИСПОЛЬЗУЕТСЯ] }
+        }
+
+        function closeAllApps() {
+            const appWindows = document.querySelectorAll('.app-window');
+            // [НЕ ИСПОЛЬЗУЕТСЯ] const overlay = document.getElementById('overlay');
+
+            appWindows.forEach(window => {
+                window.classList.remove('active');
+            });
+
+            openWindows = [];
+            minimizedWindows = [];
+            updateTaskbar();
+            // [НЕ ИСПОЛЬЗУЕТСЯ] overlay.classList.remove('active');
+        }
+
+        // Функции управления окнами
+        function minimizeApp(appName) {
+            const appWindow = document.getElementById(appName + '-window');
+            if (appWindow) {
+                // Сохраняем текущее состояние (позицию и размер) если ещё не сохранено
+                if (!windowStates[appName]) {
+                    const rect = appWindow.getBoundingClientRect();
+                    const parent = appWindow.offsetParent ? appWindow.offsetParent.getBoundingClientRect() : { left: 0, top: 0 };
+                    const leftPx = (rect.left - parent.left) + 'px';
+                    const topPx = (rect.top - parent.top) + 'px';
+                    const widthPx = rect.width + 'px';
+                    const heightPx = rect.height + 'px';
+                    windowStates[appName] = { left: leftPx, top: topPx, width: widthPx, height: heightPx };
+                }
+
+                appWindow.classList.add('minimized');
+                appWindow.classList.remove('active');
+
+                // Добавляем в список минимизированных
+                if (!minimizedWindows.includes(appName)) {
+                    minimizedWindows.push(appName);
+                }
+
+                updateTaskbar();
+            }
+        }
+
+        function restoreApp(appName) {
+            const appWindow = document.getElementById(appName + '-window');
+            if (appWindow) {
+                appWindow.classList.remove('minimized');
+                appWindow.classList.add('active');
+
+                // Убираем из минимизированных
+                minimizedWindows = minimizedWindows.filter(app => app !== appName);
+
+                updateTaskbar();
+            }
+        }
+
+        function toggleMaximize(appName) {
+            const appWindow = document.getElementById(appName + '-window');
+            if (appWindow) {
+                if (appWindow.classList.contains('maximized')) {
+                    // Восстановить размер
+                    appWindow.classList.remove('maximized');
+                    appWindow.style.width = '600px';
+                    appWindow.style.height = '400px';
+                    appWindow.style.transform = 'translate(-50%, -50%)';
+                } else {
+                    // Максимизировать
+                    appWindow.classList.add('maximized');
+                    appWindow.style.width = 'calc(100% - 40px)';
+                    appWindow.style.height = 'calc(100% - 80px)';
+                    appWindow.style.top = '20px';
+                    appWindow.style.left = '20px';
+                    appWindow.style.transform = 'none';
+                }
+            }
+        }
+
+        function updateTaskbar() {
+            const taskbar = document.getElementById('taskbar-apps');
+            taskbar.innerHTML = '';
+
+            // Показываем все открытые окна (кроме минимизированных)
+            openWindows.forEach(appName => {
+                if (!minimizedWindows.includes(appName)) {
+                    const taskbarItem = document.createElement('div');
+                    taskbarItem.className = 'taskbar-item active';
+                    taskbarItem.textContent = getAppName(appName);
+                    taskbarItem.onclick = () => restoreApp(appName);
+                    taskbar.appendChild(taskbarItem);
+                }
+            });
+
+            // Показываем минимизированные окна
+            minimizedWindows.forEach(appName => {
+                const taskbarItem = document.createElement('div');
+                taskbarItem.className = 'taskbar-item';
+                taskbarItem.textContent = getAppName(appName);
+                taskbarItem.onclick = () => restoreApp(appName);
+                taskbar.appendChild(taskbarItem);
+            });
+        }
+
+        function getAppName(appKey) {
+            const appNames = {
+                'files': 'Файлы',
+                'browser': 'Браузер',
+                'games': 'Игры',
+                'settings': 'Настройки'
+            };
+            return appNames[appKey] || appKey;
+        }
+
+        // Функции для настроек
+        function switchTab(tabName, event) {
+            // Скрываем все вкладки
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Убираем активность со всех табов
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Показываем нужную вкладку
+            document.getElementById(tabName).classList.add('active');
+
+            // Активируем соответствующий таб
+            event.target.classList.add('active');
+        }
+
+        function changeLanguage(lang) {
+            localStorage.setItem('blumbos-lang', lang);
+            applyLanguage(lang);
+            showNotification(`Язык изменен на: ${lang === 'ru' ? 'Русский' : lang === 'en' ? 'English' : 'Español'}`);
+        }
+
+        // Переводы для интерфейса
+        const translations = {
+            ru: {
+                system: 'Система',
+                appearance: 'Внешний вид',
+                network: 'Сеть',
+                systemSettings: 'Системные настройки',
+                language: 'Язык системы',
+                keyboard: 'Раскладка клавиатуры',
+                keyboardRu: 'Русская',
+                keyboardEn: 'Английская (US)',
+                autostart: 'Автозагрузка',
+                autostartDesc: 'Запускать BlumbOS при включении',
+                updates: 'Обновления системы',
+                checkUpdates: 'Проверить обновления',
+                appearanceSettings: 'Настройки внешнего вида',
+                theme: 'Цветовая тема',
+                orange: 'Оранжевый градиент',
+                purple: 'Фиолетовый градиент',
+                blue: 'Синий градиент',
+                dark: 'Темная',
+                transparency: 'Прозрачность окон',
+                fontSize: 'Размер шрифта',
+                animations: 'Анимации',
+                enableAnimations: 'Включить анимации интерфейса',
+                networkSettings: 'Сетевые настройки',
+                wifi: 'Wi-Fi подключение',
+                speed: 'Скорость интернета',
+                testSpeed: 'Протестировать скорость',
+                vpn: 'VPN',
+                enableVPN: 'Включить VPN соединение',
+                netMonitor: 'Сетевой монитор',
+                showStats: 'Показать статистику',
+                files: 'Файлы',
+                browser: 'Браузер',
+                games: 'Игры',
+                settings: 'Настройки',
+                taskbarMenu: 'Меню приложений BlumbOS!',
+                fileManager: 'Файловый менеджер',
+                homeFolder: 'Домашняя папка',
+                newFolder: 'Новая папка',
+                newFile: 'Новый текстовый файл',
+                back: 'Назад',
+                calculator: 'Калькулятор',
+                gamesWindow: 'Игры BlumbOS',
+                selectGame: 'Выберите игру',
+                browserTitle: 'BlumbBrowser',
+                enterUrl: 'Введите URL или поисковый запрос...'
+                , quickGitHub: 'GitHub',
+                quickSO: 'Stack Overflow',
+                quickWiki: 'Wikipedia',
+                quickMDN: 'MDN Docs',
+                quickYT: 'YouTube',
+                quickReddit: 'Reddit',
+                editorSave: 'Сохранить',
+                editorClose: 'Закрыть',
+                editorPlaceholder: 'Введите текст файла...',
+                editorSaved: 'Файл сохранён',
+                editorNotFound: 'Файл не найден',
+                editorCreated: 'Текстовый файл создан',
+                editorExists: 'Файл или папка с таким именем уже существует',
+                folderExists: 'Папка с таким именем уже существует',
+                folderCreated: 'Папка создана',
+                folderEmpty: '(папка пуста)',
+                rename: 'Переименовать',
+                delete: 'Удалить',
+                renamed: 'Переименовано',
+                deleted: 'Удалено',
+                notFound: 'Элемент не найден',
+                confirmDelete: 'Удалить "{name}"?',
+                calcClear: 'C',
+                calcBack: '⌫',
+                calcEq: '=',
+                calcError: 'Ошибка',
+                snake: 'Змейка',
+                tetris: 'Тетрис',
+                pong: 'Понг',
+                sapper: 'Сапер',
+                snakeScore: 'Счет:',
+                snakeLevel: 'Уровень:',
+                tetrisScore: 'Счет:',
+                tetrisLines: 'Линии:',
+                pongScore: 'Игрок 1:',
+                pongScore2: 'Игрок 2:',
+                pongControls: 'Управление: Игрок 1 (W/S), Игрок 2 (↑/↓) | Пауза: Пробел',
+                pause: 'Пауза',
+                resume: 'Продолжить',
+                restart: 'Заново',
+                menu: 'Меню',
+                gameOver: 'Игра окончена! Ваш счет: {score}',
+                notImplemented: 'еще не реализовано!',
+                loading: 'Загрузка страницы...',
+                cannotEmbed: 'Невозможно встроить страницу',
+                embedBlocked: 'Сайт вероятно блокирует встраивание через iframe.',
+                openProxy: 'Открыть через прокси (локально)',
+                openExternal: 'Открыть во внешней вкладке',
+                copyUrl: 'Копировать URL',
+                proxyHint: 'Прокси должен быть запущен локально на',
+                urlCopied: 'URL скопирован',
+                urlCopyFailed: 'Не удалось скопировать URL',
+                updatesChecking: '🔍 Проверка обновлений...',
+                updatesLatest: '✅ Система обновлена до последней версии',
+                animationsOn: 'Анимации: включены',
+                animationsOff: 'Анимации: выключены',
+                vpnOn: 'VPN: включен',
+                vpnOff: 'VPN: выключен',
+                speedTesting: '⏳ Тестирование скорости...',
+                speedResult: '📊 Скорость: {download} Мбит/с ↓ | {upload} Мбит/с ↑',
+                networkInfo: 'IP: {ip}<br>Пакеты: {packets} отправлено<br>Задержка: {latency} мс',
+                asciiWelcome: 'Добро пожаловать в BlumbOS!'
+            },
+            en: {
+                system: 'System',
+                appearance: 'Appearance',
+                network: 'Network',
+                systemSettings: 'System Settings',
+                language: 'System Language',
+                keyboard: 'Keyboard Layout',
+                keyboardRu: 'Russian',
+                keyboardEn: 'English (US)',
+                autostart: 'Autostart',
+                autostartDesc: 'Run BlumbOS on startup',
+                updates: 'System Updates',
+                checkUpdates: 'Check for updates',
+                appearanceSettings: 'Appearance Settings',
+                theme: 'Color Theme',
+                orange: 'Orange Gradient',
+                purple: 'Purple Gradient',
+                blue: 'Blue Gradient',
+                dark: 'Dark',
+                transparency: 'Window Transparency',
+                fontSize: 'Font Size',
+                animations: 'Animations',
+                enableAnimations: 'Enable UI animations',
+                networkSettings: 'Network Settings',
+                wifi: 'Wi-Fi Connection',
+                speed: 'Internet Speed',
+                testSpeed: 'Test Speed',
+                vpn: 'VPN',
+                enableVPN: 'Enable VPN connection',
+                netMonitor: 'Network Monitor',
+                showStats: 'Show statistics',
+                files: 'Files',
+                browser: 'Browser',
+                games: 'Games',
+                settings: 'Settings',
+                taskbarMenu: 'BlumbOS App Menu!',
+                fileManager: 'File Manager',
+                homeFolder: 'Home Folder',
+                newFolder: 'New Folder',
+                newFile: 'New Text File',
+                back: 'Back',
+                calculator: 'Calculator',
+                gamesWindow: 'BlumbOS Games',
+                selectGame: 'Select a game',
+                browserTitle: 'BlumbBrowser',
+                enterUrl: 'Enter URL or search query...'
+                , quickGitHub: 'GitHub',
+                quickSO: 'Stack Overflow',
+                quickWiki: 'Wikipedia',
+                quickMDN: 'MDN Docs',
+                quickYT: 'YouTube',
+                quickReddit: 'Reddit',
+                editorSave: 'Save',
+                editorClose: 'Close',
+                editorPlaceholder: 'Enter file text...',
+                editorSaved: 'File saved',
+                editorNotFound: 'File not found',
+                editorCreated: 'Text file created',
+                editorExists: 'File or folder with this name already exists',
+                folderExists: 'A folder with this name already exists',
+                folderCreated: 'Folder created',
+                folderEmpty: '(folder is empty)',
+                rename: 'Rename',
+                delete: 'Delete',
+                renamed: 'Renamed',
+                deleted: 'Deleted',
+                notFound: 'Item not found',
+                confirmDelete: 'Delete "{name}"?',
+                calcClear: 'C',
+                calcBack: '⌫',
+                calcEq: '=',
+                calcError: 'Error',
+                snake: 'Snake',
+                tetris: 'Tetris',
+                pong: 'Pong',
+                sapper: 'Minesweeper',
+                snakeScore: 'Score:',
+                snakeLevel: 'Level:',
+                tetrisScore: 'Score:',
+                tetrisLines: 'Lines:',
+                pongScore: 'Player 1:',
+                pongScore2: 'Player 2:',
+                pongControls: 'Controls: Player 1 (W/S), Player 2 (↑/↓) | Pause: Space',
+                pause: 'Pause',
+                resume: 'Resume',
+                restart: 'Restart',
+                menu: 'Menu',
+                gameOver: 'Game over! Your score: {score}',
+                notImplemented: 'not implemented yet!',
+                loading: 'Loading page...',
+                cannotEmbed: 'Cannot embed page',
+                embedBlocked: 'The site probably blocks embedding via iframe.',
+                openProxy: 'Open via proxy (local)',
+                openExternal: 'Open in external tab',
+                copyUrl: 'Copy URL',
+                proxyHint: 'Proxy must be running locally at',
+                urlCopied: 'URL copied',
+                urlCopyFailed: 'Failed to copy URL',
+                updatesChecking: '🔍 Checking for updates...',
+                updatesLatest: '✅ System is up to date',
+                animationsOn: 'Animations: enabled',
+                animationsOff: 'Animations: disabled',
+                vpnOn: 'VPN: enabled',
+                vpnOff: 'VPN: disabled',
+                speedTesting: '⏳ Testing speed...',
+                speedResult: '📊 Speed: {download} Mbps ↓ | {upload} Mbps ↑',
+                networkInfo: 'IP: {ip}<br>Packets: {packets} sent<br>Latency: {latency} ms',
+                asciiWelcome: 'Welcome to BlumbOS!'
+            },
+            es: {
+                system: 'Sistema',
+                appearance: 'Apariencia',
+                network: 'Red',
+                systemSettings: 'Configuración del sistema',
+                language: 'Idioma del sistema',
+                keyboard: 'Distribución del teclado',
+                keyboardRu: 'Ruso',
+                keyboardEn: 'Inglés (US)',
+                autostart: 'Inicio automático',
+                autostartDesc: 'Ejecutar BlumbOS al iniciar',
+                updates: 'Actualizaciones del sistema',
+                checkUpdates: 'Buscar actualizaciones',
+                appearanceSettings: 'Configuración de apariencia',
+                theme: 'Tema de color',
+                orange: 'Gradiente naranja',
+                purple: 'Gradiente púrpura',
+                blue: 'Gradiente azul',
+                dark: 'Oscuro',
+                transparency: 'Transparencia de ventanas',
+                fontSize: 'Tamaño de fuente',
+                animations: 'Animaciones',
+                enableAnimations: 'Habilitar animaciones de interfaz',
+                networkSettings: 'Configuración de red',
+                wifi: 'Conexión Wi-Fi',
+                speed: 'Velocidad de Internet',
+                testSpeed: 'Probar velocidad',
+                vpn: 'VPN',
+                enableVPN: 'Habilitar conexión VPN',
+                netMonitor: 'Monitor de red',
+                showStats: 'Mostrar estadísticas',
+                files: 'Archivos',
+                browser: 'Navegador',
+                games: 'Juegos',
+                settings: 'Configuración',
+                taskbarMenu: '¡Menú de aplicaciones BlumbOS!',
+                fileManager: 'Administrador de archivos',
+                homeFolder: 'Carpeta principal',
+                newFolder: 'Nueva carpeta',
+                newFile: 'Nuevo archivo de texto',
+                back: 'Atrás',
+                calculator: 'Calculadora',
+                gamesWindow: 'Juegos BlumbOS',
+                selectGame: 'Seleccione un juego',
+                browserTitle: 'BlumbBrowser',
+                enterUrl: 'Ingrese URL o búsqueda...'
+                , quickGitHub: 'GitHub',
+                quickSO: 'Stack Overflow',
+                quickWiki: 'Wikipedia',
+                quickMDN: 'MDN Docs',
+                quickYT: 'YouTube',
+                quickReddit: 'Reddit',
+                editorSave: 'Guardar',
+                editorClose: 'Cerrar',
+                editorPlaceholder: 'Ingrese el texto del archivo...',
+                editorSaved: 'Archivo guardado',
+                editorNotFound: 'Archivo no encontrado',
+                editorCreated: 'Archivo de texto creado',
+                editorExists: 'Ya existe un archivo o carpeta con este nombre',
+                folderExists: 'Ya existe una carpeta con este nombre',
+                folderCreated: 'Carpeta creada',
+                folderEmpty: '(la carpeta está vacía)',
+                rename: 'Renombrar',
+                delete: 'Eliminar',
+                renamed: 'Renombrado',
+                deleted: 'Eliminado',
+                notFound: 'Elemento no encontrado',
+                confirmDelete: '¿Eliminar "{name}"?',
+                calcClear: 'C',
+                calcBack: '⌫',
+                calcEq: '=',
+                calcError: 'Error',
+                snake: 'Serpiente',
+                tetris: 'Tetris',
+                pong: 'Pong',
+                sapper: 'Buscaminas',
+                snakeScore: 'Puntuación:',
+                snakeLevel: 'Nivel:',
+                tetrisScore: 'Puntuación:',
+                tetrisLines: 'Líneas:',
+                pongScore: 'Jugador 1:',
+                pongScore2: 'Jugador 2:',
+                pongControls: 'Controles: Jugador 1 (W/S), Jugador 2 (↑/↓) | Pausa: Espacio',
+                pause: 'Pausa',
+                resume: 'Continuar',
+                restart: 'Reiniciar',
+                menu: 'Menú',
+                gameOver: '¡Juego terminado! Tu puntuación: {score}',
+                notImplemented: '¡aún no implementado!',
+                loading: 'Cargando página...',
+                cannotEmbed: 'No se puede incrustar la página',
+                embedBlocked: 'El sitio probablemente bloquea la incrustación vía iframe.',
+                openProxy: 'Abrir vía proxy (local)',
+                openExternal: 'Abrir en pestaña externa',
+                copyUrl: 'Copiar URL',
+                proxyHint: 'El proxy debe estar ejecutándose localmente en',
+                urlCopied: 'URL copiado',
+                urlCopyFailed: 'No se pudo copiar la URL',
+                updatesChecking: '🔍 Buscando actualizaciones...',
+                updatesLatest: '✅ El sistema está actualizado',
+                animationsOn: 'Animaciones: habilitadas',
+                animationsOff: 'Animaciones: deshabilitadas',
+                vpnOn: 'VPN: habilitado',
+                vpnOff: 'VPN: deshabilitado',
+                speedTesting: '⏳ Probando velocidad...',
+                speedResult: '📊 Velocidad: {download} Mbps ↓ | {upload} Mbps ↑',
+                networkInfo: 'IP: {ip}<br>Paquetes: {packets} enviados<br>Latencia: {latency} ms',
+                asciiWelcome: '¡Bienvenido a BlumbOS!'
+            }
+        };
+
+        // Применить язык к интерфейсу
+        function applyLanguage(lang) {
+            const t = translations[lang] || translations['ru'];
+            // Перевод заголовка окна настроек
+            const settingsTitle = document.querySelector('#settings-window .window-title');
+            if (settingsTitle) settingsTitle.textContent = t.settings + ' BlumbOS';
+            // Перевод кнопок "Протестировать скорость" и "Показать статистику"
+            const speedBtn = document.querySelector('button[onclick="testSpeed()"]');
+            if (speedBtn) speedBtn.textContent = t.testSpeed;
+            const statsBtn = document.querySelector('button[onclick="showNetworkInfo()"]');
+            if (statsBtn) statsBtn.textContent = t.showStats;
+            // Перевод приветствия в терминале
+            const termWelcome = document.querySelector('.terminal-body .output');
+            if (termWelcome && termWelcome.textContent.trim().match(/Добро пожаловать|Welcome|Bienvenido/)) {
+                termWelcome.textContent = t.asciiWelcome;
+            }
+            // VFS хранит только английские ключи — не локализуем имена в самой структуре
+            // Вкладки
+            document.querySelectorAll('.tab')[0].textContent = t.system;
+            document.querySelectorAll('.tab')[1].textContent = t.appearance;
+            document.querySelectorAll('.tab')[2].textContent = t.network;
+            // Заголовки вкладок
+            document.getElementById('system-tab').querySelector('h3').textContent = t.systemSettings;
+            document.getElementById('appearance-tab').querySelector('h3').textContent = t.appearanceSettings;
+            document.getElementById('network-tab').querySelector('h3').textContent = t.networkSettings;
+            // Системные настройки
+            document.querySelectorAll('.setting-label')[0].textContent = t.language;
+            document.querySelectorAll('.setting-label')[1].textContent = t.keyboard;
+            // Раскладки
+            const kbSel = document.querySelectorAll('.setting-control')[1];
+            kbSel.options[0].textContent = t.keyboardRu;
+            kbSel.options[1].textContent = t.keyboardEn;
+            // Автозагрузка
+            document.querySelectorAll('.setting-label')[2].textContent = t.autostart;
+            document.querySelectorAll('.toggle-switch + span')[0].textContent = t.autostartDesc;
+            // Обновления
+            document.querySelectorAll('.setting-label')[3].textContent = t.updates;
+            document.querySelectorAll('.button')[3].textContent = t.checkUpdates;
+            // Внешний вид
+            document.querySelectorAll('.setting-label')[4].textContent = t.theme;
+            const themeSel = document.querySelectorAll('.setting-control')[2];
+            themeSel.options[0].textContent = t.orange;
+            themeSel.options[1].textContent = t.purple;
+            themeSel.options[2].textContent = t.blue;
+            themeSel.options[3].textContent = t.dark;
+            document.querySelectorAll('.setting-label')[5].textContent = t.transparency;
+            document.querySelectorAll('.setting-label')[6].textContent = t.fontSize;
+            document.querySelectorAll('.setting-label')[7].textContent = t.animations;
+            document.querySelectorAll('.toggle-switch + span')[1].textContent = t.enableAnimations;
+            // Сеть
+            document.querySelectorAll('.setting-label')[8].textContent = t.wifi;
+            document.querySelectorAll('.setting-label')[9].textContent = t.speed;
+            document.querySelectorAll('.button')[4].textContent = t.testSpeed;
+            document.querySelectorAll('.setting-label')[10].textContent = t.vpn;
+            document.querySelectorAll('.toggle-switch + span')[2].textContent = t.enableVPN;
+            document.querySelectorAll('.setting-label')[11].textContent = t.netMonitor;
+            document.querySelectorAll('.button')[5].textContent = t.showStats;
+            // Рабочий стол
+            document.querySelectorAll('.desktop-icon .icon-text')[0].textContent = t.files;
+            document.querySelectorAll('.desktop-icon .icon-text')[1].textContent = t.browser;
+            document.querySelectorAll('.desktop-icon .icon-text')[2].textContent = t.games;
+            document.querySelectorAll('.desktop-icon .icon-text')[3].textContent = t.settings;
+            // Панель задач
+            document.querySelector('.launcher').setAttribute('onclick', `showNotification('${t.taskbarMenu}')`);
+            // Окна
+            document.querySelector('#files-window .window-title').textContent = t.fileManager;
+            document.getElementById('files-title').textContent = t.homeFolder;
+            document.getElementById('btn-new-folder').textContent = t.newFolder;
+            document.getElementById('btn-new-file').textContent = t.newFile;
+            document.getElementById('btn-up').textContent = t.back;
+            document.querySelector('#calculator-window .window-title').textContent = t.calculator;
+            document.querySelector('#games-window .window-title').textContent = t.gamesWindow;
+            document.querySelector('#games-menu h3').textContent = t.selectGame;
+            document.querySelector('#browser-window .window-title').textContent = t.browserTitle;
+            document.getElementById('browser-address').placeholder = t.enterUrl;
+            // Домашняя страница браузера
+            document.querySelector('.browser-home-title').textContent = t.browserTitle;
+            document.querySelector('.browser-home-subtitle').textContent = t.enterUrl;
+            // Быстрые ссылки браузера
+            const quicks = document.querySelectorAll('.browser-quicklink > div:last-child');
+            if (quicks.length === 6) {
+                quicks[0].textContent = t.quickGitHub;
+                quicks[1].textContent = t.quickSO;
+                quicks[2].textContent = t.quickWiki;
+                quicks[3].textContent = t.quickMDN;
+                quicks[4].textContent = t.quickYT;
+                quicks[5].textContent = t.quickReddit;
+            }
+            // Кнопки редактора
+            const editorSave = document.getElementById('editor-save');
+            if (editorSave) editorSave.textContent = t.editorSave;
+            const editorClose = document.getElementById('editor-close');
+            if (editorClose) editorClose.textContent = t.editorClose;
+            const editorText = document.getElementById('editor-text');
+            if (editorText) editorText.placeholder = t.editorPlaceholder;
+            // Калькулятор
+            const calcBtns = document.querySelectorAll('#calc .button');
+            if (calcBtns.length >= 20) {
+                calcBtns[0].textContent = t.calcClear;
+                calcBtns[1].textContent = t.calcBack;
+                calcBtns[19].textContent = t.calcEq;
+            }
+            // Игры: подписи и кнопки
+            const snakeStats = document.querySelector('#snake-game .game-stats');
+            if (snakeStats) {
+                snakeStats.childNodes[0].textContent = t.snakeScore + ' ';
+                if (snakeStats.childNodes[2]) snakeStats.childNodes[2].textContent = t.snakeLevel + ' ';
+            }
+            const tetrisStats = document.querySelector('#tetris-game .game-stats');
+            if (tetrisStats) {
+                tetrisStats.childNodes[0].textContent = t.tetrisScore + ' ';
+                if (tetrisStats.childNodes[2]) tetrisStats.childNodes[2].textContent = t.tetrisLines + ' ';
+            }
+            const pongStats = document.querySelector('#pong-game .pong-stats');
+            if (pongStats) {
+                pongStats.childNodes[0].textContent = t.pongScore + ' ';
+                if (pongStats.childNodes[2]) pongStats.childNodes[2].textContent = t.pongScore2 + ' ';
+            }
+            const pongInstr = document.querySelector('#pong-game .pong-instructions');
+            if (pongInstr) pongInstr.textContent = t.pongControls;
+            // Кнопки игр
+            const snakeBtns = document.querySelectorAll('#snake-game .button');
+            if (snakeBtns.length === 3) {
+                snakeBtns[0].textContent = t.pause;
+                snakeBtns[1].textContent = t.restart;
+                snakeBtns[2].textContent = t.menu;
+            }
+            const tetrisBtns = document.querySelectorAll('#tetris-game .button');
+            if (tetrisBtns.length === 3) {
+                tetrisBtns[0].textContent = t.pause;
+                tetrisBtns[1].textContent = t.restart;
+                tetrisBtns[2].textContent = t.menu;
+            }
+            const pongBtns = document.querySelectorAll('#pong-game .button');
+            if (pongBtns.length === 3) {
+                pongBtns[0].textContent = t.pause;
+                pongBtns[1].textContent = t.restart;
+                pongBtns[2].textContent = t.menu;
+            }
+            // Названия игр в меню
+            const gameCards = document.querySelectorAll('.game-card');
+            if (gameCards.length >= 4) {
+                gameCards[0].querySelector('div:last-child').textContent = t.snake;
+                gameCards[1].querySelector('div:last-child').textContent = t.tetris;
+                gameCards[2].querySelector('div:last-child').textContent = t.pong;
+                gameCards[3].querySelector('div:last-child').textContent = t.sapper;
+            }
+            // Fallback браузера (ошибка iframe)
+            const fallbackH2 = document.querySelector('#browser-content h2');
+            if (fallbackH2) fallbackH2.textContent = t.cannotEmbed;
+            const fallbackP = document.querySelector('#browser-content p');
+            if (fallbackP) fallbackP.textContent = t.embedBlocked;
+            // Кнопки fallback
+            const proxyBtn = document.getElementById('open-proxy');
+            if (proxyBtn) proxyBtn.textContent = t.openProxy;
+            const extBtn = document.getElementById('open-external');
+            if (extBtn) extBtn.textContent = t.openExternal;
+            const copyBtn = document.getElementById('copy-url');
+            if (copyBtn) copyBtn.textContent = t.copyUrl;
+            // Прокси-хинт
+            const proxyHint = document.querySelector('#browser-content code');
+            if (proxyHint && proxyHint.parentElement && proxyHint.parentElement.textContent.includes('localhost:8080')) {
+                proxyHint.parentElement.childNodes[0].textContent = t.proxyHint + ' ';
+            }
+            // Файловый менеджер: меню файла/папки
+            document.querySelectorAll('.file-menu button').forEach((btn, i) => {
+                if (i % 2 === 0) btn.textContent = t.rename;
+                else btn.textContent = t.delete;
+            });
+            // Пустая папка
+            document.querySelectorAll('#files-root > div').forEach(div => {
+                if (div.textContent === '(папка пуста)' || div.textContent === '(folder is empty)' || div.textContent === '(la carpeta está vacía)') {
+                    div.textContent = t.folderEmpty;
+                }
+            });
+            // Модальные окна редактора
+            const editorModal = document.getElementById('editor-modal');
+            if (editorModal) {
+                const saveBtn = editorModal.querySelector('#editor-save');
+                if (saveBtn) saveBtn.textContent = t.editorSave;
+                const closeBtn = editorModal.querySelector('#editor-close');
+                if (closeBtn) closeBtn.textContent = t.editorClose;
+                const textarea = editorModal.querySelector('#editor-text');
+                if (textarea) textarea.placeholder = t.editorPlaceholder;
+            }
+        }
+
+        // Применить язык при загрузке
+        document.addEventListener('DOMContentLoaded', function () {
+            let lang = localStorage.getItem('blumbos-lang') || 'ru';
+            // Установить выбранный язык в select
+            const langSel = document.querySelectorAll('.setting-control')[0];
+            langSel.value = lang;
+            applyLanguage(lang);
+            langSel.onchange = function () { changeLanguage(this.value); };
+        });
+
+        function toggleAutostart(enabled) {
+            console.log(`Автозагрузка: ${enabled ? 'включена' : 'выключена'}`);
+        }
+
+        function checkUpdates() {
+            const status = document.getElementById('update-status');
+            status.innerHTML = '🔍 Проверка обновлений...';
+
+            setTimeout(() => {
+                status.innerHTML = '✅ Система обновлена до последней версии';
+            }, 2000);
+        }
+
+        function changeTheme(theme, suppressNotify) {
+            const themes = {
+                orange: 'linear-gradient(135deg, var(--purple) 0%, var(--orange) 50%, var(--purple) 100%)',
+                purple: 'linear-gradient(135deg, var(--dark-2) 0%, var(--purple) 50%, var(--dark-2) 100%)',
+                blue: 'linear-gradient(135deg, var(--blue-1) 0%, var(--blue-2) 50%, var(--blue-1) 100%)',
+                dark: 'linear-gradient(135deg, var(--dark-3) 0%, var(--dark-4) 50%, var(--dark-3) 100%)'
+            };
+
+            const taskbarThemes = {
+                orange: 'linear-gradient(90deg, var(--purple-90) 0%, var(--orange-90) 100%)',
+                purple: 'linear-gradient(90deg, var(--dark-2) 0%, var(--purple-90) 100%)',
+                blue: 'linear-gradient(90deg, var(--blue-90) 0%, var(--blue-80) 100%)',
+                dark: 'linear-gradient(90deg, var(--dark-90) 0%, var(--dark-80) 100%)'
+            };
+
+            const headerThemes = {
+                orange: 'linear-gradient(90deg, var(--purple), var(--orange))',
+                purple: 'linear-gradient(90deg, var(--purple), var(--purple-2))',
+                blue: 'linear-gradient(90deg, var(--blue-1), var(--blue-2))',
+                dark: 'linear-gradient(90deg, var(--dark-2), var(--dark-3))'
+            };
+
+            const desktopIconThemes = {
+                orange: ['linear-gradient(135deg, var(--orange), var(--orange-2))', 'linear-gradient(135deg, var(--purple), var(--purple-2))', 'linear-gradient(135deg, var(--orange-2), var(--orange-3))', 'linear-gradient(135deg, var(--purple-2), var(--purple-3))'],
+                purple: ['linear-gradient(135deg, var(--purple), var(--purple-2))', 'linear-gradient(135deg, var(--purple-2), var(--purple-3))', 'linear-gradient(135deg, var(--purple-2), var(--purple-3))', 'linear-gradient(135deg, var(--purple-3), var(--purple))'],
+                blue: ['linear-gradient(135deg, var(--blue-1), var(--blue-2))', 'linear-gradient(135deg, var(--blue-2), var(--blue-3))', 'linear-gradient(135deg, var(--blue-3), var(--blue-2))', 'linear-gradient(135deg, var(--blue-2), var(--blue-1))'],
+                dark: ['linear-gradient(135deg, var(--dark-1), var(--dark-2))', 'linear-gradient(135deg, var(--dark-2), var(--dark-3))', 'linear-gradient(135deg, var(--dark-3), var(--dark-4))', 'linear-gradient(135deg, var(--dark-4), var(--dark-1))']
+            };
+
+            const scrollbarThemes = {
+                orange: 'linear-gradient(135deg, var(--orange), var(--purple))',
+                purple: 'linear-gradient(135deg, var(--purple), var(--purple-2))',
+                blue: 'linear-gradient(135deg, var(--blue-2), var(--blue-1))',
+                dark: 'linear-gradient(135deg, var(--dark-3), var(--dark-2))'
+            };
+
+            const scrollbarHoverThemes = {
+                orange: 'linear-gradient(135deg, var(--orange-2), var(--purple-2))',
+                purple: 'linear-gradient(135deg, var(--purple-2), var(--purple-3))',
+                blue: 'linear-gradient(135deg, var(--blue-3), var(--blue-2))',
+                dark: 'linear-gradient(135deg, var(--dark-4), var(--dark-3))'
+            };
+
+            const promptColors = {
+                orange: '#e95420',
+                purple: '#c973a1',
+                blue: '#60a5fa',
+                dark: '#cccccc'
+            };
+
+            // Обновляем фон
+            document.body.style.background = themes[theme];
+
+            // Обновляем панель задач
+            const taskbar = document.querySelector('.taskbar');
+            if (taskbar) {
+                taskbar.style.background = taskbarThemes[theme];
+            }
+
+            // Обновляем заголовки окон (window-header)
+            document.querySelectorAll('.window-header').forEach(header => {
+                header.style.background = headerThemes[theme];
+            });
+
+            // Обновляем заголовок терминала
+            const terminalHeader = document.querySelector('.terminal-header');
+            if (terminalHeader) {
+                terminalHeader.style.background = headerThemes[theme];
+            }
+
+            // Обновляем иконки на рабочем столе
+            const desktopIcons = document.querySelectorAll('.desktop-icon .icon');
+            desktopIcons.forEach((icon, index) => {
+                icon.style.background = desktopIconThemes[theme][index] || desktopIconThemes[theme][0];
+            });
+
+            // Обновляем цвет prompt в терминале
+            document.querySelectorAll('.prompt').forEach(prompt => {
+                prompt.style.color = promptColors[theme];
+            });
+
+            // Добавляем CSS правила для scrollbar (используя style тег)
+            let themeStyle = document.getElementById('theme-scrollbar-style');
+            if (!themeStyle) {
+                themeStyle = document.createElement('style');
+                themeStyle.id = 'theme-scrollbar-style';
+                document.head.appendChild(themeStyle);
+            }
+            themeStyle.innerHTML = `
+                .terminal-body::-webkit-scrollbar-thumb {
+                    background: ${scrollbarThemes[theme]} !important;
+                }
+                .terminal-body::-webkit-scrollbar-thumb:hover {
+                    background: ${scrollbarHoverThemes[theme]} !important;
+                }
+                .window-content::-webkit-scrollbar-thumb {
+                    background: ${scrollbarThemes[theme]} !important;
+                }
+                .window-content::-webkit-scrollbar-thumb:hover {
+                    background: ${scrollbarHoverThemes[theme]} !important;
+                }
+            `;
+
+            // Переназначим основные CSS-переменные акцентов, чтобы все элементы
+            // которые используют --orange и его вариации динамически меняли цвет.
+            const root = document.documentElement;
+            const cssMap = {
+                orange: {
+                    '--orange': '#e95420',
+                    '--orange-2': '#ff6b35',
+                    '--orange-3': '#ff8c42',
+                    '--orange-30': 'rgba(233, 84, 32, 0.3)',
+                    '--orange-20': 'rgba(233, 84, 32, 0.2)',
+                    '--orange-10': 'rgba(233, 84, 32, 0.1)',
+                    '--orange-90': 'rgba(233, 84, 32, 0.9)',
+                    '--orange-80': 'rgba(233, 84, 32, 0.8)'
+                },
+                purple: {
+                    '--orange': 'var(--purple)',
+                    '--orange-2': 'var(--purple-2)',
+                    '--orange-3': 'var(--purple-3)',
+                    '--orange-30': 'rgba(119, 41, 83, 0.3)',
+                    '--orange-20': 'rgba(119, 41, 83, 0.2)',
+                    '--orange-10': 'rgba(119, 41, 83, 0.1)',
+                    '--orange-90': 'rgba(119, 41, 83, 0.9)',
+                    '--orange-80': 'rgba(119, 41, 83, 0.8)'
+                },
+                blue: {
+                    '--orange': 'var(--blue-2)',
+                    '--orange-2': 'var(--blue-3)',
+                    '--orange-3': '#93c5fd',
+                    '--orange-30': 'rgba(59, 130, 246, 0.3)',
+                    '--orange-20': 'rgba(59, 130, 246, 0.2)',
+                    '--orange-10': 'rgba(59, 130, 246, 0.1)',
+                    '--orange-90': 'rgba(59, 130, 246, 0.9)',
+                    '--orange-80': 'rgba(59, 130, 246, 0.8)'
+                },
+                dark: {
+                    '--orange': '#444444',
+                    '--orange-2': '#555555',
+                    '--orange-3': '#666666',
+                    '--orange-30': 'rgba(68,68,68,0.3)',
+                    '--orange-20': 'rgba(68,68,68,0.2)',
+                    '--orange-10': 'rgba(68,68,68,0.1)',
+                    '--orange-90': 'rgba(68,68,68,0.9)',
+                    '--orange-80': 'rgba(68,68,68,0.8)'
+                }
+            };
+
+            const map = cssMap[theme] || cssMap.orange;
+            Object.keys(map).forEach(key => {
+                root.style.setProperty(key, map[key]);
+            });
+
+            // Обновляем launcher (кнопка меню) на панели задач
+            const launcherEl = document.querySelector('.launcher');
+            if (launcherEl) {
+                launcherEl.style.background = (desktopIconThemes[theme] && desktopIconThemes[theme][0]) || headerThemes[theme];
+            }
+
+            if (!suppressNotify) showNotification(`Тема изменена на: ${theme}`);
+        }
+
+        function updateTransparency(value) {
+            document.getElementById('transparency-value').textContent = value + '%';
+            document.querySelectorAll('.app-window').forEach(window => {
+                window.style.opacity = value / 100;
+            });
+        }
+
+        function updateFontSize(value) {
+            document.getElementById('fontsize-value').textContent = value + 'px';
+            document.documentElement.style.fontSize = value + 'px';
+        }
+
+        function toggleAnimations(enabled) {
+            showNotification(`Анимации: ${enabled ? 'включены' : 'выключены'}`);
+        }
+
+        function testSpeed() {
+            const result = document.getElementById('speed-result');
+            result.innerHTML = '⏳ Тестирование скорости...';
+
+            setTimeout(() => {
+                const download = (Math.random() * 100 + 50).toFixed(1);
+                const upload = (Math.random() * 50 + 25).toFixed(1);
+                result.innerHTML = `📊 Скорость: ${download} Мбит/с ↓ | ${upload} Мбит/с ↑`;
+            }, 3000);
+        }
+
+        function toggleVPN(enabled) {
+            showNotification(`VPN: ${enabled ? 'включен' : 'выключен'}`);
+        }
+
+        function showNetworkInfo() {
+            const info = document.getElementById('network-info');
+            const data = {
+                ip: '192.168.1.' + Math.floor(Math.random() * 255),
+                packets: Math.floor(Math.random() * 1000),
+                latency: Math.floor(Math.random() * 50 + 10)
+            };
+
+            info.innerHTML = `
+            IP: ${data.ip}<br>
+            Пакеты: ${data.packets} отправлено<br>
+            Задержка: ${data.latency} мс
+        `;
+        }
+
+        // Игры
+        function showGamesMenu() {
+            document.getElementById('games-menu').style.display = 'block';
+            document.getElementById('snake-game').style.display = 'none';
+            document.getElementById('tetris-game').style.display = 'none';
+            document.getElementById('pong-game').style.display = 'none';
+            document.getElementById('minesweeper-game').style.display = 'none';
+            currentGame = null;
+        }
+
+        function startGame(gameName) {
+            document.getElementById('games-menu').style.display = 'none';
+            document.getElementById('snake-game').style.display = 'none';
+            document.getElementById('tetris-game').style.display = 'none';
+            document.getElementById('pong-game').style.display = 'none';
+            document.getElementById('minesweeper-game').style.display = 'none';
+            currentGame = gameName;
+
+            if (gameName === 'snake') {
+                document.getElementById('snake-game').style.display = 'flex';
+                initSnake();
+            } else if (gameName === 'tetris') {
+                document.getElementById('tetris-game').style.display = 'flex';
+                initTetris();
+            } else if (gameName === 'pong') {
+                document.getElementById('pong-game').style.display = 'flex';
+                pongGame = initPong();
+            } else if (gameName === 'minesweeper') {
+                document.getElementById('minesweeper-game').style.display = 'flex';
+                initMinesweeper();
+            }
+        }
+
+        function restartGame(gameName) {
+            if (gameName === 'snake') {
+                if (snakeGame) snakeGame.stop();
+                initSnake();
+            } else if (gameName === 'tetris') {
+                if (tetrisGame) tetrisGame.stop();
+                initTetris();
+            } else if (gameName === 'pong') {
+                if (pongGame) pongGame.stop();
+                pongGame = initPong();
+            } else if (gameName === 'minesweeper') {
+                // Сбрасываем таймер предыдущей игры (если был)
+                try {
+                    if (minesweeperState && minesweeperState.timerId) {
+                        clearInterval(minesweeperState.timerId);
+                        minesweeperState.timerId = null;
+                    }
+                } catch (e) { }
+                // Обнуляем отображение таймера
+                try { const timerSpan = document.getElementById('minesweeper-timer'); if (timerSpan) timerSpan.textContent = '0'; } catch (e) { }
+                initMinesweeper();
+            }
+        }
+
+        // --- Minesweeper (Сапер) ---
+        let minesweeperState = null;
+        function initMinesweeper() {
+            const rows = 9, cols = 9, mines = 10;
+            const boardDiv = document.getElementById('minesweeper-board');
+            const mineCountSpan = document.getElementById('minesweeper-mine-count');
+            const timerSpan = document.getElementById('minesweeper-timer');
+            const statusDiv = document.getElementById('minesweeper-status');
+
+            // State
+            let board = Array.from({ length: rows }, () => Array(cols).fill(0));
+            let revealed = Array.from({ length: rows }, () => Array(cols).fill(false));
+            let flagged = Array.from({ length: rows }, () => Array(cols).fill(false));
+            let mineSet = new Set();
+            let started = false, timer = 0, timerId = null, gameOver = false;
+            let cellsToReveal = rows * cols - mines;
+
+            mineCountSpan.textContent = mines;
+            timerSpan.textContent = '0';
+            statusDiv.textContent = '';
+            boardDiv.innerHTML = '';
+            boardDiv.style.pointerEvents = '';
+
+            // Place mines
+            while (mineSet.size < mines) {
+                const r = Math.floor(Math.random() * rows);
+                const c = Math.floor(Math.random() * cols);
+                mineSet.add(r + ',' + c);
+            }
+            mineSet.forEach(pos => { const [r, c] = pos.split(',').map(Number); board[r][c] = 'M'; });
+
+            // Fill numbers
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (board[r][c] === 'M') continue;
+                    let cnt = 0;
+                    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+                        if (dr === 0 && dc === 0) continue;
+                        const nr = r + dr, nc = c + dc;
+                        if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && board[nr][nc] === 'M') cnt++;
+                    }
+                    board[r][c] = cnt;
+                }
+            }
+
+            // Render table
+            const table = document.createElement('table');
+            table.style.borderCollapse = 'collapse';
+            for (let r = 0; r < rows; r++) {
+                const tr = document.createElement('tr');
+                for (let c = 0; c < cols; c++) {
+                    const td = document.createElement('td');
+                    td.style.width = '32px'; td.style.height = '32px'; td.style.border = '1px solid var(--white-10)';
+                    td.style.textAlign = 'center'; td.style.fontSize = '18px'; td.style.background = 'var(--white-10)'; td.style.cursor = 'pointer';
+                    td.dataset.r = r; td.dataset.c = c;
+                    td.onclick = () => openCell(r, c);
+                    td.oncontextmenu = e => { e.preventDefault(); flagCell(r, c); };
+                    tr.appendChild(td);
+                }
+                table.appendChild(tr);
+            }
+            boardDiv.appendChild(table);
+
+            function startTimer() { if (timerId) clearInterval(timerId); timerId = setInterval(() => { timer++; timerSpan.textContent = timer; }, 1000); }
+
+            function openCell(r, c) {
+                if (gameOver || revealed[r][c] || flagged[r][c]) return; if (!started) { started = true; startTimer(); }
+                revealed[r][c] = true; const td = table.rows[r].cells[c]; td.style.background = 'var(--white-25)'; td.style.cursor = 'default'; td.style.fontWeight = 'bold';
+                if (board[r][c] === 'M') { td.textContent = '💣'; td.style.background = '#e95420'; gameOver = true; statusDiv.textContent = 'Игра окончена! Вы подорвались.'; boardDiv.style.pointerEvents = 'none'; showAllMines(); if (timerId) clearInterval(timerId); return; }
+                if (board[r][c] > 0) { td.textContent = board[r][c]; td.style.color = getNumberColor(board[r][c]); cellsToReveal--; }
+                else { td.textContent = ''; cellsToReveal--; for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) { if (dr === 0 && dc === 0) continue; const nr = r + dr, nc = c + dc; if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) { if (!revealed[nr][nc] && !flagged[nr][nc]) openCell(nr, nc); } } }
+                checkWin();
+            }
+
+            function flagCell(r, c) { if (gameOver || revealed[r][c]) return; flagged[r][c] = !flagged[r][c]; const td = table.rows[r].cells[c]; if (flagged[r][c]) { td.textContent = '🚩'; td.style.color = '#ffbd2e'; } else td.textContent = ''; }
+
+            function getNumberColor(n) { const colors = ['#1976d2', '#388e3c', '#d32f2f', '#7b1fa2', '#ff6f00', '#00838f', '#c2185b', '#616161']; return colors[n - 1] || '#333'; }
+
+            function showAllMines() { mineSet.forEach(pos => { const [r, c] = pos.split(',').map(Number); const td = table.rows[r].cells[c]; if (!revealed[r][c]) { td.textContent = '💣'; td.style.background = '#e95420'; } }); }
+
+            function checkWin() { if (cellsToReveal === 0 && !gameOver) { statusDiv.textContent = 'Поздравляем! Вы выиграли!'; boardDiv.style.pointerEvents = 'none'; if (timerId) clearInterval(timerId); } }
+
+            minesweeperState = { board, revealed, flagged, mineSet, timerId };
+        }
+
+        // Змейка
+        function initSnake() {
+            const canvas = document.getElementById('snake-canvas');
+            const ctx = canvas.getContext('2d');
+            const gridSize = 20;
+            const tileCount = canvas.width / gridSize;
+            let snake = [{ x: 10, y: 10 }];
+            let food = {};
+            let dx = 1;
+            let dy = 0;
+            let score = 0;
+            let level = 1;
+            let gameSpeed = 150;
+            let gameLoop;
+            let isPaused = false;
+
+            function randomFood() {
+                let newFood;
+                let onSnake;
+                do {
+                    onSnake = false;
+                    newFood = {
+                        x: Math.floor(Math.random() * tileCount),
+                        y: Math.floor(Math.random() * tileCount)
+                    };
+
+                    for (let segment of snake) {
+                        if (newFood.x === segment.x && newFood.y === segment.y) {
+                            onSnake = true;
+                            break;
+                        }
+                    }
+                } while (onSnake);
+
+                food = newFood;
+            }
+
+            function drawGame() {
+                ctx.fillStyle = getCSSVar('dark-3');
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.fillStyle = getCSSVar('orange');
+                snake.forEach((segment, index) => {
+                    if (index === 0) {
+                        ctx.fillStyle = getCSSVar('orange-2');
+                    } else {
+                        ctx.fillStyle = getCSSVar('orange');
+                    }
+                    ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize - 2, gridSize - 2);
+                });
+
+                ctx.fillStyle = getCSSVar('purple');
+                ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
+
+                document.getElementById('snake-score').textContent = score;
+                document.getElementById('snake-level').textContent = level;
+            }
+
+            function update() {
+                if (isPaused) return;
+
+                const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+
+                if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+                    gameOver();
+                    return;
+                }
+
+                for (let i = 1; i < snake.length; i++) {
+                    if (head.x === snake[i].x && head.y === snake[i].y) {
+                        gameOver();
+                        return;
+                    }
+                }
+
+                snake.unshift(head);
+
+                if (head.x === food.x && head.y === food.y) {
+                    score += 10;
+                    if (score % 50 === 0) {
+                        level++;
+                        gameSpeed = Math.max(50, gameSpeed - 10);
+                        clearInterval(gameLoop);
+                        gameLoop = setInterval(update, gameSpeed);
+                    }
+                    randomFood();
+                } else {
+                    snake.pop();
+                }
+
+                drawGame();
+            }
+
+            function gameOver() {
+                clearInterval(gameLoop);
+                showNotification(`Игра окончена! Ваш счет: ${score}`);
+                showGamesMenu();
+            }
+
+            function handleKeydown(e) {
+                if (currentGame !== 'snake') return;
+
+                if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+                    e.preventDefault();
+                }
+
+                if (e.key === 'ArrowUp' && dy !== 1) {
+                    dx = 0;
+                    dy = -1;
+                } else if (e.key === 'ArrowDown' && dy !== -1) {
+                    dx = 0;
+                    dy = 1;
+                } else if (e.key === 'ArrowLeft' && dx !== 1) {
+                    dx = -1;
+                    dy = 0;
+                } else if (e.key === 'ArrowRight' && dx !== -1) {
+                    dx = 1;
+                    dy = 0;
+                } else if (e.key === ' ' || e.key === 'p') {
+                    if (snakeGame && snakeGame.pause) {
+                        snakeGame.pause();
+                    }
+                }
+            }
+
+            randomFood();
+            drawGame();
+            gameLoop = setInterval(update, gameSpeed);
+            document.addEventListener('keydown', handleKeydown);
+
+            snakeGame = {
+                stop: function () {
+                    clearInterval(gameLoop);
+                    document.removeEventListener('keydown', handleKeydown);
+                },
+                pause: function () {
+                    isPaused = !isPaused;
+                    const button = document.querySelector('#snake-game .button');
+                    if (button) {
+                        button.textContent = isPaused ? 'Продолжить' : 'Пауза';
+                    }
+                    if (!isPaused) {
+                        drawGame();
+                    }
+                }
+            };
+        }
+
+        // Глобальная функция паузы для Snake
+        function snakePause() {
+            if (snakeGame && snakeGame.pause) {
+                snakeGame.pause();
+            }
+        }
+
+        // Тетрис
+        function initTetris() {
+            const canvas = document.getElementById('tetris-canvas');
+            const ctx = canvas.getContext('2d');
+            const blockSize = 30;
+            const cols = 10;
+            const rows = 20;
+
+            canvas.width = cols * blockSize;
+            canvas.height = rows * blockSize;
+
+            const colors = {
+                I: '#00f0f0',
+                J: '#0000f0',
+                L: '#f0a000',
+                O: '#f0f000',
+                S: '#00f000',
+                T: '#a000f0',
+                Z: '#f00000'
+            };
+
+            const pieces = {
+                I: [[1, 1, 1, 1]],
+                J: [[1, 0, 0], [1, 1, 1]],
+                L: [[0, 0, 1], [1, 1, 1]],
+                O: [[1, 1], [1, 1]],
+                S: [[0, 1, 1], [1, 1, 0]],
+                T: [[0, 1, 0], [1, 1, 1]],
+                Z: [[1, 1, 0], [0, 1, 1]]
+            };
+
+            // helper rotate clockwise
+            function rotate(matrix) {
+                const m = matrix;
+                const h = m.length, w = m[0].length;
+                const res = Array.from({ length: w }, () => Array(h).fill(0));
+                for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) res[x][h - 1 - y] = m[y][x];
+                return res;
+            }
+
+            function generateRotations(shape) {
+                const rots = [];
+                let m = shape.map(row => row.slice());
+                for (let i = 0; i < 4; i++) {
+                    const key = m.map(r => r.join(',')).join('|');
+                    if (!rots.some(r => r.key === key)) rots.push({ mat: m, key });
+                    m = rotate(m);
+                }
+                return rots.map(r => r.mat);
+            }
+
+            const tetrominoes = {};
+            for (const k in pieces) tetrominoes[k] = generateRotations(pieces[k]);
+
+            let board = createMatrix(rows, cols);
+            let score = 0;
+            let lines = 0;
+            let dropInterval = 700; // ms
+            let dropTimer = null;
+            let isPaused = false;
+
+            let current = null;
+
+            function createMatrix(r, c) {
+                return Array.from({ length: r }, () => Array(c).fill(0));
+            }
+
+            function spawnPiece() {
+                const types = Object.keys(tetrominoes);
+                const type = types[Math.floor(Math.random() * types.length)];
+                const rots = tetrominoes[type];
+                const mat = rots[0];
+                current = {
+                    type,
+                    rots,
+                    rot: 0,
+                    matrix: mat,
+                    pos: { x: Math.floor((cols - mat[0].length) / 2), y: -1 }
+                };
+                if (collide(board, current)) {
+                    // game over
+                    stopGame();
+                    showNotification('Game Over');
+                }
+            }
+
+            function collide(board, piece) {
+                const m = piece.rots[piece.rot];
+                for (let y = 0; y < m.length; y++) {
+                    for (let x = 0; x < m[y].length; x++) {
+                        if (m[y][x]) {
+                            const by = piece.pos.y + y;
+                            const bx = piece.pos.x + x;
+                            if (by < 0) continue;
+                            if (bx < 0 || bx >= cols || by >= rows) return true;
+                            if (board[by][bx]) return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            function merge(board, piece) {
+                const m = piece.rots[piece.rot];
+                for (let y = 0; y < m.length; y++) {
+                    for (let x = 0; x < m[y].length; x++) {
+                        if (m[y][x]) {
+                            const by = piece.pos.y + y;
+                            const bx = piece.pos.x + x;
+                            if (by >= 0 && by < rows && bx >= 0 && bx < cols) board[by][bx] = piece.type;
+                        }
+                    }
+                }
+            }
+
+            function clearLines() {
+                let rowCount = 0;
+                outer: for (let y = rows - 1; y >= 0; y--) {
+                    for (let x = 0; x < cols; x++) {
+                        if (!board[y][x]) {
+                            continue outer;
+                        }
+                    }
+                    // full
+                    const row = board.splice(y, 1)[0];
+                    board.unshift(Array(cols).fill(0));
+                    y++; // recheck same y after splice
+                    rowCount++;
+                }
+                if (rowCount > 0) {
+                    lines += rowCount;
+                    score += [0, 100, 300, 500, 800][rowCount] || rowCount * 200;
+                    // speed up
+                    dropInterval = Math.max(100, 700 - Math.floor(lines / 10) * 50);
+                    restartDropTimer();
+                }
+            }
+
+            function rotatePiece(dir) {
+                const prev = current.rot;
+                current.rot = (current.rot + dir + current.rots.length) % current.rots.length;
+                if (collide(board, current)) {
+                    // try wall kicks simple
+                    const kicks = [1, -1, 2, -2];
+                    let moved = false;
+                    for (const k of kicks) {
+                        current.pos.x += k;
+                        if (!collide(board, current)) { moved = true; break; }
+                        current.pos.x -= k;
+                    }
+                    if (!moved) current.rot = prev;
+                }
+            }
+
+            function drop() {
+                current.pos.y++;
+                if (collide(board, current)) {
+                    current.pos.y--;
+                    merge(board, current);
+                    clearLines();
+                    spawnPiece();
+                }
+                draw();
+            }
+
+            function hardDrop() {
+                while (true) {
+                    current.pos.y++;
+                    if (collide(board, current)) {
+                        current.pos.y--;
+                        merge(board, current);
+                        clearLines();
+                        spawnPiece();
+                        draw();
+                        return;
+                    }
+                }
+            }
+
+            function move(dir) {
+                current.pos.x += dir;
+                if (collide(board, current)) current.pos.x -= dir;
+                draw();
+            }
+
+            function drawCell(x, y, type) {
+                const px = x * blockSize, py = y * blockSize;
+                ctx.fillStyle = colors[type] || '#777';
+                ctx.fillRect(px + 1, py + 1, blockSize - 2, blockSize - 2);
+                ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+                ctx.strokeRect(px + 1, py + 1, blockSize - 2, blockSize - 2);
+            }
+
+            function draw() {
+                // background
+                ctx.fillStyle = getCSSVar('dark-3') || '#1a1a1a';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // board
+                for (let y = 0; y < rows; y++) {
+                    for (let x = 0; x < cols; x++) {
+                        const cell = board[y][x];
+                        if (cell) drawCell(x, y, cell);
+                        else {
+                            // subtle grid
+                            ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+                            ctx.strokeRect(x * blockSize + 0.5, y * blockSize + 0.5, blockSize, blockSize);
+                        }
+                    }
+                }
+
+                // current piece
+                if (current) {
+                    const m = current.rots[current.rot];
+                    for (let y = 0; y < m.length; y++) {
+                        for (let x = 0; x < m[y].length; x++) {
+                            if (m[y][x]) {
+                                const bx = current.pos.x + x;
+                                const by = current.pos.y + y;
+                                if (by >= 0) drawCell(bx, by, current.type);
+                            }
+                        }
+                    }
+                }
+
+                document.getElementById('tetris-score').textContent = score;
+                document.getElementById('tetris-lines').textContent = lines;
+            }
+
+            function restartDropTimer() {
+                if (dropTimer) clearInterval(dropTimer);
+                dropTimer = setInterval(function () { if (!isPaused && current) drop(); }, dropInterval);
+            }
+
+            function keyHandler(e) {
+                if (!current) return;
+                if (e.key === 'ArrowLeft') { e.preventDefault(); move(-1); }
+                else if (e.key === 'ArrowRight') { e.preventDefault(); move(1); }
+                else if (e.key === 'ArrowDown') { e.preventDefault(); current.pos.y++; if (collide(board, current)) { current.pos.y--; merge(board, current); clearLines(); spawnPiece(); } draw(); }
+                else if (e.key === 'ArrowUp') { e.preventDefault(); rotatePiece(1); }
+                else if (e.key === ' ') { e.preventDefault(); hardDrop(); }
+                else if (e.key === 'p' || e.key === 'P') { e.preventDefault(); togglePause(); }
+            }
+
+            function togglePause() {
+                isPaused = !isPaused;
+                const btn = document.querySelector('#tetris-game .button:first-child');
+                if (btn) btn.textContent = isPaused ? 'Продолжить' : 'Пауза';
+            }
+
+            function stopGame() {
+                if (dropTimer) clearInterval(dropTimer);
+                document.removeEventListener('keydown', keyHandler);
+                current = null;
+                board = createMatrix(rows, cols);
+                draw();
+            }
+
+            // initialize
+            board = createMatrix(rows, cols);
+            score = 0; lines = 0; isPaused = false;
+            spawnPiece();
+            draw();
+            restartDropTimer();
+            document.removeEventListener('keydown', keyHandler);
+            document.addEventListener('keydown', keyHandler);
+
+            tetrisGame = {
+                stop: function () { stopGame(); },
+                pause: function () { togglePause(); }
+            };
+        }
+
+        // Глобальная функция паузы для Tetris
+        function tetrisPause() {
+            if (tetrisGame && tetrisGame.pause) {
+                tetrisGame.pause();
+            }
+        }
+        // Понг - переписанная версия
+        function initPong() {
+            const canvas = document.getElementById('pong-canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Размеры
+            const paddleWidth = 10;
+            const paddleHeight = 80;
+            const ballSize = 8;
+
+            // Позиции
+            let player1Y = canvas.height / 2 - paddleHeight / 2;
+            let player2Y = canvas.height / 2 - paddleHeight / 2;
+            let ballX = canvas.width / 2;
+            let ballY = canvas.height / 2;
+            let ballSpeedX = 4;
+            let ballSpeedY = 3;
+
+            // Счет
+            let score1 = 0;
+            let score2 = 0;
+
+            // Состояние
+            let isPaused = false;
+            let gameLoop;
+
+            // Управление
+            const keys = {};
+
+            function draw() {
+                // Очистка
+                ctx.fillStyle = getCSSVar('dark-3');
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Центральная линия
+                ctx.strokeStyle = getCSSVar('mid-gray');
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(canvas.width / 2, 0);
+                ctx.lineTo(canvas.width / 2, canvas.height);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Ракетки
+                ctx.fillStyle = getCSSVar('orange');
+                ctx.fillRect(10, player1Y, paddleWidth, paddleHeight);
+                ctx.fillRect(canvas.width - 20, player2Y, paddleWidth, paddleHeight);
+
+                // Мяч
+                ctx.fillStyle = getCSSVar('white');
+                ctx.beginPath();
+                ctx.arc(ballX, ballY, ballSize, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Счет
+                ctx.fillStyle = getCSSVar('white');
+                ctx.font = 'bold 32px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(score1, canvas.width / 4, 50);
+                ctx.fillText(score2, canvas.width * 3 / 4, 50);
+
+                // Пауза
+                if (isPaused) {
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = getCSSVar('white');
+                    ctx.font = 'bold 36px Arial';
+                    ctx.fillText('ПАУЗА', canvas.width / 2, canvas.height / 2);
+                }
+            }
+
+            function update() {
+                if (isPaused) return;
+
+                // Движение мяча
+                ballX += ballSpeedX;
+                ballY += ballSpeedY;
+
+                // Отскок от верхней и нижней стенки
+                if (ballY - ballSize < 0 || ballY + ballSize > canvas.height) {
+                    ballSpeedY = -ballSpeedY;
+                }
+
+                // Столкновение с левой ракеткой
+                if (ballX - ballSize < 20 &&
+                    ballY > player1Y &&
+                    ballY < player1Y + paddleHeight) {
+                    ballSpeedX = -ballSpeedX;
+                    // Увеличиваем скорость после удара
+                    ballSpeedX *= 1.1;
+                    ballSpeedY *= 1.1;
+                }
+
+                // Столкновение с правой ракеткой
+                if (ballX + ballSize > canvas.width - 20 &&
+                    ballY > player2Y &&
+                    ballY < player2Y + paddleHeight) {
+                    ballSpeedX = -ballSpeedX;
+                    // Увеличиваем скорость после удара
+                    ballSpeedX *= 1.1;
+                    ballSpeedY *= 1.1;
+                }
+
+                // Гол в левые ворота
+                if (ballX < 0) {
+                    score2++;
+                    resetBall();
+                }
+
+                // Гол в правые ворота
+                if (ballX > canvas.width) {
+                    score1++;
+                    resetBall();
+                }
+
+                // Управление игроком 1 (W/S)
+                if (keys['KeyW'] && player1Y > 0) {
+                    player1Y -= 6;
+                }
+                if (keys['KeyS'] && player1Y < canvas.height - paddleHeight) {
+                    player1Y += 6;
+                }
+
+                // Управление игроком 2 (Стрелки)
+                if (keys['ArrowUp'] && player2Y > 0) {
+                    player2Y -= 6;
+                }
+                if (keys['ArrowDown'] && player2Y < canvas.height - paddleHeight) {
+                    player2Y += 6;
+                }
+
+                // Обновление счета на экране
+                document.getElementById('pong-score1').textContent = score1;
+                document.getElementById('pong-score2').textContent = score2;
+
+                draw();
+            }
+
+            function resetBall() {
+                ballX = canvas.width / 2;
+                ballY = canvas.height / 2;
+                ballSpeedX = (Math.random() > 0.5 ? 1 : -1) * 4;
+                ballSpeedY = (Math.random() - 0.5) * 6;
+            }
+
+            function handleKeydown(e) {
+                keys[e.code] = true;
+
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    pausePong();
+                }
+            }
+
+            function handleKeyup(e) {
+                keys[e.code] = false;
+            }
+
+            // Запуск игры
+            resetBall();
+            draw();
+            gameLoop = setInterval(update, 1000 / 60);
+
+            // Обработчики событий
+            document.addEventListener('keydown', handleKeydown);
+            document.addEventListener('keyup', handleKeyup);
+
+            return {
+                stop: function () {
+                    clearInterval(gameLoop);
+                    document.removeEventListener('keydown', handleKeydown);
+                    document.removeEventListener('keyup', handleKeyup);
+                },
+                pause: function () {
+                    isPaused = !isPaused;
+                    const button = document.querySelector('#pong-game .button:first-child');
+                    if (button) {
+                        button.textContent = isPaused ? 'Продолжить' : 'Пауза';
+                    }
+                    if (!isPaused) {
+                        draw();
+                    }
+                }
+            };
+        }
+
+        // Глобальная функция паузы для Pong
+        function pausePong() {
+            if (pongGame && pongGame.pause) {
+                pongGame.pause();
+            }
+        }
+
+        // Обновленная функция startGame
+        function startGame(gameName) {
+            document.getElementById('games-menu').style.display = 'none';
+            document.getElementById('snake-game').style.display = 'none';
+            document.getElementById('tetris-game').style.display = 'none';
+            document.getElementById('pong-game').style.display = 'none';
+            document.getElementById('minesweeper-game').style.display = 'none';
+            currentGame = gameName;
+
+            if (gameName === 'snake') {
+                document.getElementById('snake-game').style.display = 'flex';
+                initSnake();
+            } else if (gameName === 'tetris') {
+                document.getElementById('tetris-game').style.display = 'flex';
+                initTetris();
+            } else if (gameName === 'pong') {
+                document.getElementById('pong-game').style.display = 'flex';
+                pongGame = initPong();
+            } else if (gameName === 'minesweeper') {
+                document.getElementById('minesweeper-game').style.display = 'flex';
+                initMinesweeper();
+            }
+        }
+
+        // Обновленная функция restartGame
+        function restartGame(gameName) {
+            if (gameName === 'snake') {
+                if (snakeGame) snakeGame.stop();
+                initSnake();
+            } else if (gameName === 'tetris') {
+                if (tetrisGame) tetrisGame.stop();
+                initTetris();
+            } else if (gameName === 'pong') {
+                if (pongGame) pongGame.stop();
+                pongGame = initPong();
+            } else if (gameName === 'minesweeper') {
+                // Clear previous timer if any and reset UI timer
+                try {
+                    if (minesweeperState && minesweeperState.timerId) {
+                        clearInterval(minesweeperState.timerId);
+                        minesweeperState.timerId = null;
+                    }
+                } catch (e) { }
+                try { const timerSpan = document.getElementById('minesweeper-timer'); if (timerSpan) timerSpan.textContent = '0'; } catch (e) { }
+                // Also reset any stored timer value if present
+                try { if (minesweeperState) minesweeperState.timer = 0; } catch (e) { }
+                initMinesweeper();
+            }
+        }
+
+        // Обновленная функция showGamesMenu
+        function showGamesMenu() {
+            document.getElementById('games-menu').style.display = 'block';
+            document.getElementById('snake-game').style.display = 'none';
+            document.getElementById('tetris-game').style.display = 'none';
+            document.getElementById('pong-game').style.display = 'none';
+            document.getElementById('minesweeper-game').style.display = 'none';
+
+            // Останавливаем все игры
+            try { if (snakeGame) snakeGame.stop(); } catch (e) { }
+            try { if (tetrisGame) tetrisGame.stop(); } catch (e) { }
+            try { if (pongGame) pongGame.stop(); } catch (e) { }
+            try { if (minesweeperState && minesweeperState.timerId) clearInterval(minesweeperState.timerId); } catch (e) { }
+
+            currentGame = null;
+        }
+
+        // Функции браузера
+        let browserHistory = [];
+        let browserHistoryIndex = -1;
+        let currentUrl = '';
+
+        function browserNavigateTo(url) {
+            // Получаем чистый URL
+            if (!url.includes('://')) {
+                url = 'https://' + url;
+            }
+
+            // Очищаем историю после текущей позиции
+            browserHistory = browserHistory.slice(0, browserHistoryIndex + 1);
+            browserHistory.push(url);
+            browserHistoryIndex++;
+
+            currentUrl = url;
+            displayBrowserContent(url);
+            updateBrowserUI();
+        }
+
+        function browserSearch(query) {
+            // Используем DuckDuckGo для поиска (более CORS-friendly)
+            const searchUrl = `https://duckduckgo.com/?q=${encodeURIComponent(query)}`;
+            browserNavigateTo(searchUrl);
+        }
+
+        function browserNavigate() {
+            const input = document.getElementById('browser-address');
+            const query = input.value.trim();
+
+            if (!query) return;
+
+            // Проверяем, это URL или поисковый запрос
+            if (query.includes('http://') || query.includes('https://') || query.includes('.com') || query.includes('.org') || query.includes('.net')) {
+                browserNavigateTo(query);
+            } else {
+                // Это поисковый запрос - используем DuckDuckGo
+                browserSearch(query);
+            }
+        }
+
+        function browserNavigateBack() {
+            if (browserHistoryIndex > 0) {
+                browserHistoryIndex--;
+                currentUrl = browserHistory[browserHistoryIndex];
+                displayBrowserContent(currentUrl);
+                updateBrowserUI();
+            }
+        }
+
+        function browserNavigateForward() {
+            if (browserHistoryIndex < browserHistory.length - 1) {
+                browserHistoryIndex++;
+                currentUrl = browserHistory[browserHistoryIndex];
+                displayBrowserContent(currentUrl);
+                updateBrowserUI();
+            }
+        }
+
+        function browserReload() {
+            if (currentUrl) {
+                displayBrowserContent(currentUrl);
+            }
+        }
+
+        function browserHome() {
+            const homeContent = document.getElementById('browser-home');
+            const content = document.getElementById('browser-content');
+            content.innerHTML = homeContent.innerHTML;
+            document.getElementById('browser-address').value = '';
+            currentUrl = '';
+            browserHistory = [];
+            browserHistoryIndex = -1;
+            updateBrowserUI();
+        }
+
+        function updateBrowserUI() {
+            // Обновляем адресную строку
+            document.getElementById('browser-address').value = currentUrl;
+
+            // Обновляем кнопки навигации
+            document.getElementById('browser-back').disabled = browserHistoryIndex <= 0;
+            document.getElementById('browser-forward').disabled = browserHistoryIndex >= browserHistory.length - 1;
+        }
+
+        function displayBrowserContent(url) {
+            const contentDiv = document.getElementById('browser-content');
+
+            // Показываем загрузку
+            contentDiv.innerHTML = '<div class="browser-loading">Загрузка страницы...</div>';
+
+            // Используем setTimeout чтобы имитировать загрузку
+            setTimeout(() => {
+                // Нормализуем URL (добавляем схему если нужно)
+                try { new URL(url); } catch (e) { url = 'https://' + url; }
+
+                // Готовим iframe
+                contentDiv.innerHTML = '';
+                const iframe = document.createElement('iframe');
+                iframe.src = url;
+                iframe.style.width = '100%';
+                iframe.style.height = '100%';
+                iframe.style.border = 'none';
+                iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts allow-forms allow-popups');
+
+                let loaded = false;
+                iframe.onload = function () { loaded = true; updateBrowserUI(); };
+                iframe.onerror = function () { loaded = false; };
+
+                contentDiv.appendChild(iframe);
+
+                // Если iframe не загрузился за 2 секунды, показываем фоллбэк с опциями
+                setTimeout(() => {
+                    if (!loaded) {
+                        contentDiv.innerHTML = `\
+                        <div style="padding: 30px; text-align: center; color: var(--gray);">\
+                            <h2>Невозможно встроить страницу</h2>\
+                            <p>Сайт <strong>${(new URL(url)).hostname}</strong> вероятно блокирует встраивание через iframe.</p>\
+                            <p style="margin-top: 12px; color: var(--dark-variant); font-size: 13px;">Вы можете открыть сайт через локальный прокси или во внешней вкладке.</p>\
+                            <div style="margin-top: 18px; display:flex; gap:10px; justify-content:center">\
+                                <button id=\"open-proxy\" style=\"padding: 8px 14px; background: var(--orange); color: var(--white); border: none; border-radius: 6px; cursor: pointer;\">Открыть через прокси (локально)</button>\
+                                <button id=\"open-external\" style=\"padding: 8px 14px; background: var(--gray); color: var(--white); border: none; border-radius: 6px; cursor: pointer;\">Открыть во внешней вкладке</button>\
+                                <button id=\"copy-url\" style=\"padding: 8px 14px; background: var(--dark-variant); color: var(--white); border: none; border-radius: 6px; cursor: pointer;\">Копировать URL</button>\
+                            </div>\
+                            <div style=\"margin-top: 12px; color: var(--dark-variant); font-size: 12px;\">Прокси должен быть запущен локально на <code>http://localhost:8080</code></div>\
+                        </div>\
+                    `;
+
+                        setTimeout(() => {
+                            const proxyBtn = document.getElementById('open-proxy');
+                            const extBtn = document.getElementById('open-external');
+                            const copyBtn = document.getElementById('copy-url');
+                            if (proxyBtn) proxyBtn.addEventListener('click', () => { loadProxyIframe(url); });
+                            if (extBtn) extBtn.addEventListener('click', () => { window.open(url, '_blank'); });
+                            if (copyBtn) copyBtn.addEventListener('click', () => {
+                                try { navigator.clipboard.writeText(url); showNotification('URL скопирован'); } catch (e) { showNotification('Не удалось скопировать URL'); }
+                            });
+                        }, 50);
+                    }
+                }, 2000);
+            }, 800);
+        }
+
+        // Загрузить страницу через локальный прокси и встроить в iframe
+        function loadProxyIframe(url) {
+            const contentDiv = document.getElementById('browser-content');
+            contentDiv.innerHTML = '<div class="browser-loading">Загрузка через прокси...</div>';
+
+            // Собираем адрес прокси (локальный)
+            const proxyUrl = 'http://localhost:8080/proxy?url=' + encodeURIComponent(url);
+
+            // Попробуем получить HTML через fetch (требует CORS на прокси). Если fetch проходит,
+            // используем iframe.srcdoc, чтобы избежать проблем с загрузкой оригинальных заголовков.
+            fetch(proxyUrl, { method: 'GET' })
+                .then(resp => {
+                    if (!resp.ok) throw new Error('Proxy returned ' + resp.status);
+                    const ct = resp.headers.get('content-type') || '';
+                    if (ct.includes('text/html')) return resp.text();
+                    // Если не HTML, вернём null — тогда fallback будет простым src
+                    return null;
+                })
+                .then(html => {
+                    contentDiv.innerHTML = '';
+                    const iframe = document.createElement('iframe');
+                    iframe.style.width = '100%';
+                    iframe.style.height = '100%';
+                    iframe.style.border = 'none';
+                    iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts allow-forms allow-popups');
+
+                    if (html) {
+                        try {
+                            iframe.srcdoc = html;
+                            contentDiv.appendChild(iframe);
+                            return;
+                        } catch (e) {
+                            // Если srcdoc недоступен, упадём в fallback
+                        }
+                    }
+
+                    // Fallback: просто установить src на прокси
+                    iframe.src = proxyUrl;
+                    contentDiv.appendChild(iframe);
+                })
+                .catch(err => {
+                    // Если fetch запрещён (CORS) или ошибка, пробуем fallback — iframe.src
+                    contentDiv.innerHTML = '';
+                    const iframe = document.createElement('iframe');
+                    iframe.style.width = '100%';
+                    iframe.style.height = '100%';
+                    iframe.style.border = 'none';
+                    iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts allow-forms allow-popups');
+                    iframe.src = proxyUrl;
+                    contentDiv.appendChild(iframe);
+                });
+        }
+
+        // Инициализация браузера завершена
+
+        function showAsciiLogo() {
+            const asciiLogo = `
+╔═══════════════════════════════════════════════════════════════════╗
+║                                                                   ║
+║    ██████╗ ██╗     ██╗   ██╗███╗   ███╗██████╗  ██████╗ ███████╗  ║
+║    ██╔══██╗██║     ██║   ██║████╗ ████║██╔══██╗██╔═══██╗██╔════╝  ║
+║    ██████╔╝██║     ██║   ██║██╔████╔██║██████╔╝██║   ██║███████╗  ║
+║    ██╔══██╗██║     ██║   ██║██║╚██╔╝██║██╔══██╗██║   ██║╚════██║  ║
+║    ██████╔╝███████╗╚██████╔╝██║ ╚═╝ ██║██████╔╝╚██████╔╝███████║  ║
+║    ╚═════╝ ╚══════╝ ╚═════╝ ╚═╝     ╚═╝╚═════╝  ╚═════╝ ╚══════╝  ║
+║                                                                   ║
+║                        BlumbOS 22.04 LTS                          ║
+║                                                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
+        `;
+
+            const logoElement = document.createElement('div');
+            logoElement.className = 'ascii-logo';
+            logoElement.textContent = asciiLogo;
+            document.body.appendChild(logoElement);
+        }
+
+        // Простая виртуальная файловая система (in-memory)
+        // Используем только английские ключи папок (не локализовать имена в VFS)
+        const vfs = {
+            name: 'home',
+            children: {
+                'Documents': { type: 'folder', children: {} },
+                'Downloads': { type: 'folder', children: {} },
+                'Music': { type: 'folder', children: {} },
+                'Pictures': { type: 'folder', children: {} },
+                'Videos': { type: 'folder', children: {} },
+                'Desktop': { type: 'folder', children: {} }
+            }
+        };
+
+        let currentPath = []; // массив имён папок, например ['Документы']
+        let currentNode = vfs;
+        let editingFile = null; // {node, name}
+
+        function getNodeByPath(pathArr) {
+            let node = vfs;
+            for (const p of pathArr) {
+                if (!node.children || !node.children[p]) return null;
+                node = node.children[p];
+            }
+            return node;
+        }
+
+        function renderCurrentFolder() {
+            const root = document.getElementById('files-root');
+            const title = document.getElementById('files-title');
+            const pathName = currentPath.length ? currentPath.join('/') : 'Домашняя папка';
+            title.textContent = pathName;
+
+            const node = getNodeByPath(currentPath) || vfs;
+            currentNode = node;
+
+            root.innerHTML = '';
+
+            const entries = node.children || {};
+            const keys = Object.keys(entries);
+            if (keys.length === 0) {
+                const empty = document.createElement('div');
+                empty.style.color = getCSSVar('muted');
+                empty.textContent = '(папка пуста)';
+                root.appendChild(empty);
+                return;
+            }
+
+            keys.forEach(name => {
+                const item = entries[name];
+                const container = document.createElement('div');
+                container.className = 'item-container';
+
+                const el = document.createElement('div');
+                el.className = 'folder-icon';
+                el.style.display = 'flex';
+                el.style.flexDirection = 'column';
+                el.style.alignItems = 'center';
+                el.style.justifyContent = 'center';
+                el.style.padding = '12px';
+                el.style.minHeight = '80px';
+
+                const contentDiv = document.createElement('div');
+                contentDiv.style.width = '100%';
+                contentDiv.style.height = '100%';
+                contentDiv.style.display = 'flex';
+                contentDiv.style.flexDirection = 'column';
+                contentDiv.style.alignItems = 'center';
+                contentDiv.style.justifyContent = 'center';
+
+                if (item.type === 'folder') {
+                    contentDiv.innerHTML = `<div style=\"font-size:28px;margin-bottom:6px\">📁</div><div style=\"font-size:13px;text-align:center\">${name}</div>`;
+                    contentDiv.onclick = () => { openFolder(name); };
+                } else {
+                    contentDiv.innerHTML = `<div style=\"font-size:28px;margin-bottom:6px\">📄</div><div style=\"font-size:13px;text-align:center\">${name}</div>`;
+                    contentDiv.onclick = () => { openTextFile(name); };
+                }
+
+                // Кнопка меню (троеточие) для файла/папки
+                const menuBtn = document.createElement('div');
+                menuBtn.className = 'menu-button';
+                menuBtn.innerHTML = '⋮';
+                menuBtn.title = 'Открыть меню';
+
+                // Меню действий
+                const menu = document.createElement('div');
+                menu.className = 'file-menu';
+
+                const renameBtn = document.createElement('button');
+                renameBtn.textContent = 'Переименовать';
+                renameBtn.onclick = (e) => { e.stopPropagation(); renameEntry(name); menu.style.display = 'none'; };
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Удалить';
+                deleteBtn.onclick = (e) => { e.stopPropagation(); deleteEntry(name); menu.style.display = 'none'; };
+
+                menu.appendChild(renameBtn);
+                menu.appendChild(deleteBtn);
+
+                menuBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    // Скрыть остальные меню
+                    document.querySelectorAll('.file-menu').forEach(m => { if (m !== menu) m.style.display = 'none'; });
+                    menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+                });
+
+                // Закрытие меню при клике вне
+                container.addEventListener('click', () => { menu.style.display = 'none'; });
+
+                el.appendChild(contentDiv);
+                container.appendChild(el);
+                container.appendChild(menuBtn);
+                container.appendChild(menu);
+                root.appendChild(container);
+            });
+        }
+
+        function openFolder(name) {
+            currentPath.push(name);
+            renderCurrentFolder();
+        }
+
+        function goUp() {
+            if (currentPath.length > 0) {
+                currentPath.pop();
+                renderCurrentFolder();
+            }
+        }
+
+        function createFolder() {
+            const name = prompt('Введите имя новой папки:');
+            if (!name) return;
+            const node = getNodeByPath(currentPath) || vfs;
+            if (!node.children) node.children = {};
+            if (node.children[name]) { showNotification('Папка с таким именем уже существует'); return; }
+            node.children[name] = { type: 'folder', children: {} };
+            renderCurrentFolder();
+            showNotification('Папка создана');
+        }
+
+        function createTextFile() {
+            const name = prompt('Введите имя текстового файла (с расширением .txt):');
+            if (!name) return;
+            const node = getNodeByPath(currentPath) || vfs;
+            if (!node.children) node.children = {};
+            if (node.children[name]) { showNotification('Файл или папка с таким именем уже существует'); return; }
+            node.children[name] = { type: 'file', content: '' };
+            renderCurrentFolder();
+            showNotification('Текстовый файл создан');
+            openTextFile(name);
+        }
+
+        function openTextFile(name) {
+            const node = getNodeByPath(currentPath) || vfs;
+            const file = node.children && node.children[name];
+            if (!file || file.type !== 'file') { showNotification('Файл не найден'); return; }
+            editingFile = { node, name };
+            document.getElementById('editor-filename').textContent = name;
+            document.getElementById('editor-text').value = file.content || '';
+            document.getElementById('editor-modal').style.display = 'block';
+        }
+
+        function saveEditor() {
+            if (!editingFile) return;
+            const text = document.getElementById('editor-text').value;
+            editingFile.node.children[editingFile.name].content = text;
+            document.getElementById('editor-modal').style.display = 'none';
+            editingFile = null;
+            showNotification('Файл сохранён');
+        }
+
+        function closeEditor() {
+            document.getElementById('editor-modal').style.display = 'none';
+            editingFile = null;
+        }
+
+        // Переименование и удаление
+        function renameEntry(oldName) {
+            const node = getNodeByPath(currentPath) || vfs;
+            if (!node.children || !node.children[oldName]) { showNotification('Элемент не найден'); return; }
+            const newName = prompt('Введите новое имя:', oldName);
+            if (!newName || newName === oldName) return;
+            if (node.children[newName]) { showNotification('Элемент с таким именем уже существует'); return; }
+            node.children[newName] = node.children[oldName];
+            delete node.children[oldName];
+            renderCurrentFolder();
+            showNotification('Переименовано');
+        }
+
+        function deleteEntry(name) {
+            const node = getNodeByPath(currentPath) || vfs;
+            if (!node.children || !node.children[name]) { showNotification('Элемент не найден'); return; }
+            const ok = confirm(`Удалить "${name}"?`);
+            if (!ok) return;
+            delete node.children[name];
+            renderCurrentFolder();
+            showNotification('Удалено');
+        }
+
+
+        // ... существующий код ...
+
+        // Функция для показа терминала
+        function showTerminal() {
+            const terminal = document.getElementById('terminal-window') || document.querySelector('.terminal');
+            const state = windowStates['terminal'];
+            if (state) {
+                // Восстанавливаем сохранённое состояние
+                terminal.style.left = state.left;
+                terminal.style.top = state.top;
+                terminal.style.width = state.width;
+                terminal.style.height = state.height;
+                terminal.style.transform = 'none';
+            } else {
+                // Центрируем при первом открытии
+                terminal.style.left = '50%';
+                terminal.style.top = '50%';
+                terminal.style.transform = 'translate(-50%, -50%)';
+                terminal.style.width = '600px';
+                terminal.style.height = '400px';
+            }
+            terminal.style.display = 'block';
+        }
+
+        // Функция для скрытия терминала при клике на рабочий стол
+        function setupDesktopClick() {
+            document.querySelector('.desktop').addEventListener('click', function (e) {
+                // Проверяем, что кликнули именно на рабочий стол, а не на иконки
+                if (e.target.classList.contains('desktop') ||
+                    e.target.classList.contains('desktop-icon') ||
+                    e.target.closest('.desktop-icon')) {
+                    return; // Не скрываем терминал при клике на иконки
+                }
+                const terminal = document.querySelector('.terminal');
+                terminal.style.display = 'none';
+            });
+        }
+
+        // Калькулятор: простая клиентская реализация
+        function initCalculator() {
+            const display = document.getElementById('calc-display');
+            if (!display) return;
+
+            function appendToDisplay(v) {
+                if (display.value === 'Ошибка') display.value = '';
+                display.value = (display.value || '') + v;
+            }
+
+            function clearDisplay() { display.value = ''; }
+            function backspace() { display.value = display.value.slice(0, -1); }
+
+            function formatForEval(expr) {
+                return expr.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
+            }
+
+            function evaluateExpression() {
+                try {
+                    const expr = formatForEval(display.value || '0');
+                    if (!/^[0-9.+\-*/()%\s]+$/.test(expr)) { display.value = 'Ошибка'; return; }
+                    // eslint-disable-next-line no-new-func
+                    const result = Function('return ' + expr)();
+                    display.value = String(result);
+                } catch (e) { display.value = 'Ошибка'; }
+            }
+
+            document.querySelectorAll('#calc .button').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const cmd = this.getAttribute('data-cmd');
+                    if (!cmd) return;
+                    if (cmd === 'clear') clearDisplay();
+                    else if (cmd === 'back') backspace();
+                    else if (cmd === '=') evaluateExpression();
+                    else appendToDisplay(cmd);
+                });
+            });
+
+            window.addEventListener('keydown', function (e) {
+                const key = e.key;
+                if (key === 'Enter') { e.preventDefault(); evaluateExpression(); return; }
+                if (key === 'Backspace') { e.preventDefault(); backspace(); return; }
+                if (key === 'Escape') { e.preventDefault(); clearDisplay(); return; }
+                if (/^[0-9.+\-*/()%]$/.test(key)) { appendToDisplay(key); }
+            });
+        }
+
+        // Обновленная инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', function () {
+            showNotification('Добро пожаловать в BlumbOS!');
+            showAsciiLogo();
+            setupDesktopClick();
+
+            // Инициализируем браузер UI
+            updateBrowserUI();
+
+            // Универсальный обработчик для всех кнопок close/minimize во всех окнах
+            // Обработчик для кнопок закрытия в app-window (.window-close)
+            document.querySelectorAll('.window-close').forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    // Находим родительское окно
+                    const appWindow = this.closest('.app-window');
+                    if (!appWindow) return;
+                    const appId = appWindow.id; // e.g., 'files-window'
+                    const appName = appId.replace('-window', ''); // e.g., 'files'
+                    // Удаляем сохранённое состояние
+                    if (windowStates[appName]) delete windowStates[appName];
+                    // Сбрасываем inline-стили к дефолтным значениям
+                    appWindow.style.left = '50%';
+                    appWindow.style.top = '50%';
+                    appWindow.style.transform = 'translate(-50%, -50%)';
+                    // Восстанавливаем стандартные размеры (если были сохранены)
+                    appWindow.style.width = '';
+                    appWindow.style.height = '';
+                    appWindow.style.display = 'none';
+                    closeApp(appName);
+                });
+            });
+            // Обработчик для кнопок минимизации в app-window (.window-minimize)
+            document.querySelectorAll('.window-minimize').forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    const appWindow = this.closest('.app-window');
+                    if (!appWindow) return;
+                    const appId = appWindow.id;
+                    const appName = appId.replace('-window', '');
+                    // Получаем текущие координаты и размер в пикселях
+                    const rect = appWindow.getBoundingClientRect();
+                    const parent = appWindow.offsetParent ? appWindow.offsetParent.getBoundingClientRect() : { left: 0, top: 0 };
+                    const leftPx = (rect.left - parent.left) + 'px';
+                    const topPx = (rect.top - parent.top) + 'px';
+                    const widthPx = rect.width + 'px';
+                    const heightPx = rect.height + 'px';
+                    windowStates[appName] = { left: leftPx, top: topPx, width: widthPx, height: heightPx };
+                    minimizeApp(appName);
+                });
+            });
+            // Обработчик для кнопок терминала (.terminal-button)
+            const terminalButtons = document.querySelectorAll('.terminal-button');
+            if (terminalButtons.length > 0) {
+                terminalButtons[0].addEventListener('click', function (e) { // close
+                    e.stopPropagation();
+                    const term = document.getElementById('terminal-window') || document.querySelector('.terminal');
+                    if (windowStates['terminal']) delete windowStates['terminal'];
+                    term.style.left = '50%';
+                    term.style.top = '50%';
+                    term.style.transform = 'translate(-50%, -50%)';
+                    term.style.width = '600px';
+                    term.style.height = '400px';
+                    term.style.display = 'none';
+                });
+                if (terminalButtons.length > 1) {
+                    terminalButtons[1].addEventListener('click', function (e) { // minimize
+                        e.stopPropagation();
+                        const term = document.getElementById('terminal-window') || document.querySelector('.terminal');
+                        const rect = term.getBoundingClientRect();
+                        const parent = term.offsetParent ? term.offsetParent.getBoundingClientRect() : { left: 0, top: 0 };
+                        const leftPx = (rect.left - parent.left) + 'px';
+                        const topPx = (rect.top - parent.top) + 'px';
+                        const widthPx = rect.width + 'px';
+                        const heightPx = rect.height + 'px';
+                        windowStates['terminal'] = { left: leftPx, top: topPx, width: widthPx, height: heightPx };
+                        term.style.display = 'none';
+                    });
+                }
+                if (terminalButtons.length > 2) {
+                    terminalButtons[2].addEventListener('click', function (e) { // maximize
+                        e.stopPropagation();
+                        const terminal = document.getElementById('terminal-window') || document.querySelector('.terminal');
+                        if (terminal.style.width === 'calc(100% - 40px)') {
+                            terminal.style.width = '600px';
+                            terminal.style.height = '400px';
+                            terminal.style.transform = 'translate(-50%, -50%)';
+                        } else {
+                            terminal.style.width = 'calc(100% - 40px)';
+                            terminal.style.height = 'calc(100% - 80px)';
+                            terminal.style.transform = 'translate(-50%, -50%)';
+                        }
+                    });
+                }
+            }
+            terminalButtons[2].addEventListener('click', function () { // maximize
+                const terminal = document.querySelector('.terminal');
+                if (terminal.style.width === 'calc(100% - 40px)') {
+                    terminal.style.width = '600px';
+                    terminal.style.height = '400px';
+                    terminal.style.transform = 'translate(-50%, -50%)';
+                } else {
+                    terminal.style.width = 'calc(100% - 40px)';
+                    terminal.style.height = 'calc(100% - 80px)';
+                    terminal.style.transform = 'translate(-50%, -50%)';
+                }
+            });
+            // Инициализация файлового менеджера UI
+            const btnNewFolder = document.getElementById('btn-new-folder');
+            const btnNewFile = document.getElementById('btn-new-file');
+            const btnUp = document.getElementById('btn-up');
+            const editorSave = document.getElementById('editor-save');
+            const editorClose = document.getElementById('editor-close');
+
+            if (btnNewFolder) btnNewFolder.addEventListener('click', createFolder);
+            if (btnNewFile) btnNewFile.addEventListener('click', createTextFile);
+            if (btnUp) btnUp.addEventListener('click', goUp);
+            if (editorSave) editorSave.addEventListener('click', saveEditor);
+            if (editorClose) editorClose.addEventListener('click', closeEditor);
+
+            // Рендерим домашнюю папку (скрытое окно — рендер не виден, но структура готова)
+            renderCurrentFolder();
+            // Инициализация калькулятора
+            initCalculator();
+
+            // Закрывать любые открытые меню при клике вне
+            document.addEventListener('click', function () {
+                document.querySelectorAll('.file-menu').forEach(m => m.style.display = 'none');
+            });
+
+            // Применяем тему при первой загрузке, берём значение селекта темы (если есть)
+            try {
+                const themeSelect = document.querySelector('select[onchange^="changeTheme"]');
+                const initialTheme = themeSelect ? (themeSelect.value || 'orange') : 'orange';
+                // Вызываем changeTheme для установки всех стилей сразу
+                if (typeof changeTheme === 'function') {
+                    changeTheme(initialTheme, true);
+                }
+            } catch (e) {
+                console.error('Ошибка при применении начальной темы:', e);
+            }
+
+            // === Drag & Resize: реализация перетаскивания и изменения размера окон ===
+            // Поддерживает элементы с классами .app-window и .terminal
+            function makeWindowsDraggableResizable() {
+                const windows = document.querySelectorAll('.app-window, .terminal');
+                windows.forEach(win => {
+                    // Гарантируем абсолютное позиционирование.
+                    // Если элемент центрирован через transform (например, терминал),
+                    // вычисляем текущие координаты и переводим в left/top, убирая transform,
+                    // чтобы последующие манипуляции не вычислялись неправильно.
+                    const cs = getComputedStyle(win);
+                    const rect = win.getBoundingClientRect();
+                    const hasTransform = cs.transform && cs.transform !== 'none';
+                    if (hasTransform) {
+                        const computedLeft = rect.left + window.scrollX;
+                        const computedTop = rect.top + window.scrollY;
+                        win.style.left = computedLeft + 'px';
+                        win.style.top = computedTop + 'px';
+                        // Убираем transform (центровка была применена только для первоначального отображения)
+                        win.style.transform = 'none';
+                    } else {
+                        // Если inline-стиля left/top нет, установим их, чтобы дальнейшие расчёты были точными
+                        if (!win.style.left) win.style.left = rect.left + 'px';
+                        if (!win.style.top) win.style.top = rect.top + 'px';
+                    }
+                    win.style.position = 'absolute';
+                    win.style.touchAction = 'none';
+
+                    const header = win.querySelector('.window-header, .terminal-header');
+                    if (header) {
+                        header.style.cursor = 'move';
+                        header.onpointerdown = null;
+                        header.addEventListener('pointerdown', startDrag);
+                    }
+
+                    const handles = win.querySelectorAll('.resize-handle');
+                    handles.forEach(h => {
+                        h.style.touchAction = 'none';
+                        h.onpointerdown = null;
+                        h.addEventListener('pointerdown', startResize);
+                    });
+                });
+
+                let activeWin = null;
+                let startX = 0, startY = 0;
+                let startW = 0, startH = 0;
+                let startLeft = 0, startTop = 0;
+                let pointerOffsetX = 0, pointerOffsetY = 0;
+                let action = null; // 'move' | 'resize-br' | 'resize-r' | 'resize-b' | 'resize'
+
+                function startDrag(e) {
+                    // Игнорируем захват, если клик начался по интерактивному элементу внутри заголовка
+                    if (e.target && e.target.closest && e.target.closest('.terminal-buttons, .window-buttons, .terminal-button, .window-button, button, input, select, textarea')) {
+                        return; // позволяем событию обрабатываться как обычный клик
+                    }
+                    if (e.button && e.button !== 0) return;
+                    activeWin = this.closest('.app-window, .terminal');
+                    if (!activeWin) return;
+                    action = 'move';
+                    try { activeWin.setPointerCapture(e.pointerId); } catch (err) { }
+
+                    const rect = activeWin.getBoundingClientRect();
+                    // Перед началом перетаскивания переводим текущую визуальную позицию в left/top
+                    startX = e.clientX; startY = e.clientY;
+                    startLeft = rect.left + window.scrollX; startTop = rect.top + window.scrollY;
+                    // Устанавливаем реальные left/top и убираем transform (если вдруг остался)
+                    activeWin.style.left = startLeft + 'px';
+                    activeWin.style.top = startTop + 'px';
+                    activeWin.style.transform = 'none';
+                    // Смещение указателя внутри окна — чтобы окно не «прыгало» при захвате
+                    pointerOffsetX = startX - startLeft;
+                    pointerOffsetY = startY - startTop;
+
+                    makeWindowsDraggableResizable.zIndex = (makeWindowsDraggableResizable.zIndex || 200) + 1;
+                    activeWin.style.zIndex = makeWindowsDraggableResizable.zIndex;
+
+                    document.addEventListener('pointermove', onPointerMove);
+                    document.addEventListener('pointerup', endPointer);
+                }
+
+                function startResize(e) {
+                    if (e.button && e.button !== 0) return;
+                    activeWin = this.closest('.app-window, .terminal');
+                    if (!activeWin) return;
+                    e.preventDefault();
+
+                    if (this.classList.contains('resize-handle-bottom-right')) action = 'resize-br';
+                    else if (this.classList.contains('resize-handle-right')) action = 'resize-r';
+                    else if (this.classList.contains('resize-handle-bottom')) action = 'resize-b';
+                    else if (this.classList.contains('resize-handle-left')) action = 'resize-l';
+                    else action = 'resize';
+
+                    try { activeWin.setPointerCapture(e.pointerId); } catch (err) { }
+                    const rect = activeWin.getBoundingClientRect();
+                    startX = e.clientX; startY = e.clientY;
+                    startW = rect.width; startH = rect.height;
+                    startLeft = rect.left + window.scrollX; startTop = rect.top + window.scrollY;
+
+                    makeWindowsDraggableResizable.zIndex = (makeWindowsDraggableResizable.zIndex || 200) + 1;
+                    activeWin.style.zIndex = makeWindowsDraggableResizable.zIndex;
+
+                    document.addEventListener('pointermove', onPointerMove);
+                    document.addEventListener('pointerup', endPointer);
+                }
+
+                function onPointerMove(e) {
+                    if (!activeWin) return;
+                    e.preventDefault();
+
+                    const cs = getComputedStyle(activeWin);
+                    const minW = parseInt(cs.minWidth) || 200;
+                    const minH = parseInt(cs.minHeight) || 150;
+
+                    if (action === 'move') {
+                        // Используем смещение указателя для точного позиционирования
+                        let left = e.clientX - pointerOffsetX;
+                        let top = e.clientY - pointerOffsetY;
+                        left = Math.max(0, Math.min(left, window.innerWidth - activeWin.offsetWidth));
+                        top = Math.max(0, Math.min(top, window.innerHeight - activeWin.offsetHeight - 40));
+                        activeWin.style.left = left + 'px';
+                        activeWin.style.top = top + 'px';
+                    } else if (action && action.startsWith('resize')) {
+                        const dx = e.clientX - startX; const dy = e.clientY - startY;
+                        let newW = startW; let newH = startH;
+                        if (action === 'resize-br') {
+                            newW = Math.max(minW, startW + dx);
+                            newH = Math.max(minH, startH + dy);
+                        } else if (action === 'resize-r') {
+                            newW = Math.max(minW, startW + dx);
+                        } else if (action === 'resize-b') {
+                            newH = Math.max(minH, startH + dy);
+                        } else if (action === 'resize-l') {
+                            // Изменяем ширину и левую координату при растягивании слева
+                            const proposedW = Math.max(minW, startW - dx);
+                            const deltaW = proposedW - startW; // отрицательное или ноль
+                            const newLeft = startLeft + (startW - proposedW);
+                            activeWin.style.width = proposedW + 'px';
+                            activeWin.style.left = Math.max(0, Math.min(newLeft, window.innerWidth - proposedW)) + 'px';
+                            return;
+                        } else {
+                            newW = Math.max(minW, startW + dx);
+                            newH = Math.max(minH, startH + dy);
+                        }
+                        activeWin.style.width = newW + 'px'; activeWin.style.height = newH + 'px';
+                    }
+                }
+
+                function endPointer(e) {
+                    try { if (activeWin) activeWin.releasePointerCapture(e.pointerId); } catch (err) { }
+                    document.removeEventListener('pointermove', onPointerMove);
+                    document.removeEventListener('pointerup', endPointer);
+                    activeWin = null; action = null;
+                }
+            }
+
+            // Инициализируем drag&resize для текущих окон
+            makeWindowsDraggableResizable();
+
+        });
+    </script>
+</body>
+
+</html>

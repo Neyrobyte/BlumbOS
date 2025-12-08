@@ -1,0 +1,16 @@
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://172.18.0.1:8080
+Press CTRL+C to quit
+127.0.0.1 - - [30/Nov/2025 00:31:59] "GET /proxy?url=https://duckduckgo.com/?q=GitHub HTTP/1.1" 200 -
+127.0.0.1 - - [30/Nov/2025 00:33:41] "GET /proxy?url=https://www.wikipedia.org HTTP/1.1" 200 -
+127.0.0.1 - - [30/Nov/2025 00:33:44] "GET /proxy?url=https://www.wikipedia.org HTTP/1.1" 200 -
+127.0.0.1 - - [30/Nov/2025 00:34:02] "GET /proxy?url=https://duckduckgo.com/?q%3DStack%2520Overflow HTTP/1.1" 200 -
+127.0.0.1 - - [30/Nov/2025 00:34:05] "GET /proxy?url=https://duckduckgo.com/?q%3DStack%2520Overflow HTTP/1.1" 200 -
+127.0.0.1 - - [30/Nov/2025 00:35:21] "GET /proxy?url=https://www.wikipedia.org HTTP/1.1" 200 -
+127.0.0.1 - - [30/Nov/2025 00:35:23] "GET /proxy?url=https://www.wikipedia.org HTTP/1.1" 200 -
+127.0.0.1 - - [30/Nov/2025 00:36:00] "GET /proxy?url=https://duckduckgo.com/?q%3DStack%2520Overflow HTTP/1.1" 200 -
+127.0.0.1 - - [30/Nov/2025 00:36:02] "GET /proxy?url=https://duckduckgo.com/?q%3DStack%2520Overflow HTTP/1.1" 200 -
+127.0.0.1 - - [30/Nov/2025 00:36:47] "GET /proxy?url=https://duckduckgo.com/?q%3DGitHub HTTP/1.1" 200 -
+127.0.0.1 - - [30/Nov/2025 00:36:50] "GET /proxy?url=https://duckduckgo.com/?q%3DGitHub HTTP/1.1" 200 -

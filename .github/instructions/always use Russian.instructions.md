@@ -1,0 +1,4 @@
+---
+applyTo: '**'
+---
+always use Russian

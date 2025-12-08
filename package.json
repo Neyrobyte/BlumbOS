@@ -1,0 +1,17 @@
+{
+  "name": "blumbos-proxy",
+  "version": "1.0.0",
+  "description": "Simple proxy to allow embedding external sites into BlumbBrowser for local testing",
+  "main": "proxy.js",
+  "scripts": {
+    "start": "node proxy.js"
+  },
+  "author": "BlumbOS",
+  "license": "MIT",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.12",
+    "express": "^4.18.2",
+    "node-fetch": "^2.6.7",
+    "cors": "^2.8.5"
+  }
+}
