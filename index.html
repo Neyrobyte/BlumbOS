@@ -867,6 +867,7 @@
             height: calc(100% - 60px);
             overflow: hidden;
             background: #2c001e;
+            user-select: all;
         }
 
         .browser-content {
@@ -1259,11 +1260,11 @@
                     <h1 class="browser-home-title">BlumbBrowser</h1>
                     <p class="browser-home-subtitle">Введите URL или выполните поиск</p>
                     <div class="browser-quicklinks">
-                        <a href="javascript:void(0)" onclick="browserSearch('GitHub')" class="browser-quicklink">
+                        <a href="javascript:void(0)" onclick="browserNavigateTo('https://github.com')" class="browser-quicklink">
                             <div style="font-size: 24px; margin-bottom: 10px;">💻</div>
                             <div>GitHub</div>
                         </a>
-                        <a href="javascript:void(0)" onclick="browserSearch('Stack Overflow')"
+                        <a href="javascript:void(0)" onclick="browserNavigateTo('https://stackoverflow.com')"
                             class="browser-quicklink">
                             <div style="font-size: 24px; margin-bottom: 10px;">📚</div>
                             <div>Stack Overflow</div>
@@ -1273,15 +1274,15 @@
                             <div style="font-size: 24px; margin-bottom: 10px;">📖</div>
                             <div>Wikipedia</div>
                         </a>
-                        <a href="javascript:void(0)" onclick="browserSearch('MDN Web Docs')" class="browser-quicklink">
+                        <a href="javascript:void(0)" onclick="browserNavigateTo('https://developer.mozilla.org')" class="browser-quicklink">
                             <div style="font-size: 24px; margin-bottom: 10px;">🎓</div>
                             <div>MDN Docs</div>
                         </a>
-                        <a href="javascript:void(0)" onclick="browserSearch('YouTube')" class="browser-quicklink">
+                        <a href="javascript:void(0)" onclick="browserNavigateTo('https://youtube.com')" class="browser-quicklink">
                             <div style="font-size: 24px; margin-bottom: 10px;">📺</div>
                             <div>YouTube</div>
                         </a>
-                        <a href="javascript:void(0)" onclick="browserSearch('Reddit')" class="browser-quicklink">
+                        <a href="javascript:void(0)" onclick="browserNavigateTo('https://reddit.com')" class="browser-quicklink">
                             <div style="font-size: 24px; margin-bottom: 10px;">💬</div>
                             <div>Reddit</div>
                         </a>
@@ -3447,7 +3448,7 @@
         }
 
         function browserSearch(query) {
-            // Используем DuckDuckGo для поиска (более CORS-friendly)
+            // Используем DuckDuckGo для поиска (теперь загружается через прокси)
             const searchUrl = `https://duckduckgo.com/?q=${encodeURIComponent(query)}`;
             browserNavigateTo(searchUrl);
         }
@@ -3522,50 +3523,177 @@
                 // Нормализуем URL (добавляем схему если нужно)
                 try { new URL(url); } catch (e) { url = 'https://' + url; }
 
-                // Готовим iframe
+                // Всегда используем прокси-эндпоинт. Попытаемся получить HTML через прокси,
+                // переписать все ресурсы на прокси-URL и вставить результат в iframe.srcdoc.
+                // Это позволяет проксировать также все подресурсы и избежать CORS/MIME проблем.
+                const proxyBase = 'https://blumbos.onrender.com/proxy?url=';
+                const proxyUrl = proxyBase + encodeURIComponent(url);
+
                 contentDiv.innerHTML = '';
                 const iframe = document.createElement('iframe');
-                iframe.src = url;
                 iframe.style.width = '100%';
                 iframe.style.height = '100%';
                 iframe.style.border = 'none';
                 iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts allow-forms allow-popups');
 
-                let loaded = false;
-                iframe.onload = function () { loaded = true; updateBrowserUI(); };
-                iframe.onerror = function () { loaded = false; };
+                // Helper: resolve resource URL relative to page URL
+                function resolveResource(res) {
+                    try { return new URL(res, url).toString(); } catch (e) { return res; }
+                }
 
-                contentDiv.appendChild(iframe);
+                // Helper: convert a resource absolute URL into proxied URL
+                function proxify(resolved) {
+                    return proxyBase + encodeURIComponent(resolved);
+                }
 
-                // Если iframe не загрузился за 2 секунды, показываем фоллбэк с опциями
-                setTimeout(() => {
-                    if (!loaded) {
-                        contentDiv.innerHTML = `\
-                        <div style="padding: 30px; text-align: center; color: var(--gray);">\
-                            <h2>Невозможно встроить страницу</h2>\
-                            <p>Сайт <strong>${(new URL(url)).hostname}</strong> вероятно блокирует встраивание через iframe.</p>\
-                            <p style="margin-top: 12px; color: var(--dark-variant); font-size: 13px;">Вы можете открыть сайт через локальный прокси или во внешней вкладке.</p>\
-                            <div style="margin-top: 18px; display:flex; gap:10px; justify-content:center">\
-                                <button id=\"open-proxy\" style=\"padding: 8px 14px; background: var(--orange); color: var(--white); border: none; border-radius: 6px; cursor: pointer;\">Открыть через прокси (локально)</button>\
-                                <button id=\"open-external\" style=\"padding: 8px 14px; background: var(--gray); color: var(--white); border: none; border-radius: 6px; cursor: pointer;\">Открыть во внешней вкладке</button>\
-                                <button id=\"copy-url\" style=\"padding: 8px 14px; background: var(--dark-variant); color: var(--white); border: none; border-radius: 6px; cursor: pointer;\">Копировать URL</button>\
-                            </div>\
-                            <div style=\"margin-top: 12px; color: var(--dark-variant); font-size: 12px;\">Прокси должен быть запущен локально на <code>http://localhost:8080</code></div>\
-                        </div>\
-                    `;
+                // Fetch HTML from proxy, rewrite asset URLs to go through proxy, insert via srcdoc
+                fetch(proxyUrl, { method: 'GET' })
+                    .then(r => {
+                        if (!r.ok) throw new Error('Proxy returned ' + r.status);
+                        return r.text();
+                    })
+                    .then(html => {
+                        try {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
 
-                        setTimeout(() => {
-                            const proxyBtn = document.getElementById('open-proxy');
-                            const extBtn = document.getElementById('open-external');
-                            const copyBtn = document.getElementById('copy-url');
-                            if (proxyBtn) proxyBtn.addEventListener('click', () => { loadProxyIframe(url); });
-                            if (extBtn) extBtn.addEventListener('click', () => { window.open(url, '_blank'); });
-                            if (copyBtn) copyBtn.addEventListener('click', () => {
-                                try { navigator.clipboard.writeText(url); showNotification('URL скопирован'); } catch (e) { showNotification('Не удалось скопировать URL'); }
+                            // Remove CSP meta tags that may block embedding
+                            doc.querySelectorAll('meta[http-equiv]').forEach(m => {
+                                const he = (m.getAttribute('http-equiv')||'').toLowerCase();
+                                if (he.includes('content-security-policy') || he.includes('x-frame-options')) m.remove();
                             });
-                        }, 50);
-                    }
-                }, 2000);
+
+                            // Rewrite src, href, data, poster, srcset attributes
+                            const sel = '[src],[href],[data],[poster],[srcset]';
+                            doc.querySelectorAll(sel).forEach(el => {
+                                // handle srcset separately
+                                if (el.hasAttribute('srcset')) {
+                                    const ss = el.getAttribute('srcset');
+                                    const parts = ss.split(',').map(p => p.trim()).map(item => {
+                                        const [u, desc] = item.split(/\s+/);
+                                        const resolved = resolveResource(u);
+                                        return proxify(resolved) + (desc ? ' ' + desc : '');
+                                    });
+                                    el.setAttribute('srcset', parts.join(', '));
+                                }
+
+                                if (el.hasAttribute('src')) {
+                                    const r = el.getAttribute('src');
+                                    const resolved = resolveResource(r);
+                                    el.setAttribute('src', proxify(resolved));
+                                }
+                                if (el.hasAttribute('href')) {
+                                    const r = el.getAttribute('href');
+                                    // skip javascript: and mailto: links
+                                    if (/^(javascript:|mailto:|#)/i.test(r)) return;
+                                    const resolved = resolveResource(r);
+                                    el.setAttribute('href', proxify(resolved));
+                                }
+                                if (el.hasAttribute('data')) {
+                                    const r = el.getAttribute('data');
+                                    const resolved = resolveResource(r);
+                                    el.setAttribute('data', proxify(resolved));
+                                }
+                                if (el.hasAttribute('poster')) {
+                                    const r = el.getAttribute('poster');
+                                    const resolved = resolveResource(r);
+                                    el.setAttribute('poster', proxify(resolved));
+                                }
+                            });
+
+                            // Rewrite inline styles and style blocks with url(...)
+                            function rewriteCssText(text) {
+                                return text.replace(/url\(([^)]+)\)/g, (m, p1) => {
+                                    const u = p1.replace(/^["']|["']$/g, '').trim();
+                                    if (/^(data:|about:|javascript:)/i.test(u)) return `url(${u})`;
+                                    const resolved = resolveResource(u);
+                                    return `url(${proxify(resolved)})`;
+                                });
+                            }
+
+                            doc.querySelectorAll('style').forEach(s => {
+                                s.textContent = rewriteCssText(s.textContent);
+                            });
+                            doc.querySelectorAll('[style]').forEach(el => {
+                                el.setAttribute('style', rewriteCssText(el.getAttribute('style')));
+                            });
+
+                            // Add a <base> so that any remaining relative URLs resolve against original site
+                            const base = doc.querySelector('base') || doc.createElement('base');
+                            base.setAttribute('href', url);
+                            if (!doc.head.querySelector('base')) doc.head.insertBefore(base, doc.head.firstChild);
+
+                            // Inject script to force all navigations to go through proxy
+                            const inject = doc.createElement('script');
+                            inject.textContent = `(function(){
+                                const proxyBase = '${proxyBase}';
+                                function resolveUrl(u){ try { return new URL(u, document.baseURI).toString(); } catch(e) { return u; } }
+                                function proxify(u){ return proxyBase + encodeURIComponent(resolveUrl(u)); }
+
+                                // Override window.open
+                                try {
+                                    const _open = window.open.bind(window);
+                                    window.open = function(u, name, specs){
+                                        try { if (typeof u === 'string' && !/^(javascript:|mailto:|#)/i.test(u)) u = proxify(u); } catch(e){}
+                                        return _open(u, name, specs);
+                                    };
+                                } catch(e) {}
+
+                                // Override location methods
+                                try {
+                                    const _assign = location.assign.bind(location);
+                                    location.assign = function(u){ if (typeof u === 'string' && !/^(javascript:|mailto:|#)/i.test(u)) u = proxify(u); return _assign(u); };
+                                    const _replace = location.replace.bind(location);
+                                    location.replace = function(u){ if (typeof u === 'string' && !/^(javascript:|mailto:|#)/i.test(u)) u = proxify(u); return _replace(u); };
+                                } catch(e) {}
+
+                                // Intercept clicks on links
+                                document.addEventListener('click', function(e){
+                                    const a = e.target.closest && e.target.closest('a');
+                                    if (!a) return;
+                                    const href = a.getAttribute('href');
+                                    if (!href) return;
+                                    if (/^(javascript:|mailto:|#)/i.test(href)) return;
+                                    e.preventDefault();
+                                    const prox = proxify(href);
+                                    const target = a.getAttribute('target');
+                                    if (target && target !== '_self') {
+                                        window.open(prox, target);
+                                    } else {
+                                        location.href = prox;
+                                    }
+                                }, true);
+
+                                // Intercept form submissions
+                                document.addEventListener('submit', function(e){
+                                    const f = e.target;
+                                    if (!f || f.tagName !== 'FORM') return;
+                                    try {
+                                        const action = f.getAttribute('action') || document.baseURI;
+                                        f.setAttribute('action', proxify(action));
+                                    } catch(e) {}
+                                }, true);
+                            })();`;
+                            doc.head.insertBefore(inject, doc.head.firstChild);
+
+                            // Serialize and insert
+                            const finalHtml = '<!doctype html>\n' + doc.documentElement.outerHTML;
+                            iframe.srcdoc = finalHtml;
+                            contentDiv.appendChild(iframe);
+                            updateBrowserUI();
+                        } catch (e) {
+                            // Parsing/rewriting failed — fallback to simple iframe.src
+                            iframe.src = proxyUrl;
+                            contentDiv.appendChild(iframe);
+                            updateBrowserUI();
+                        }
+                    })
+                    .catch(err => {
+                        // On any error, fallback to iframe.src
+                        iframe.src = proxyUrl;
+                        contentDiv.appendChild(iframe);
+                        updateBrowserUI();
+                    });
             }, 800);
         }
 
@@ -3574,53 +3702,17 @@
             const contentDiv = document.getElementById('browser-content');
             contentDiv.innerHTML = '<div class="browser-loading">Загрузка через прокси...</div>';
 
-            // Собираем адрес прокси (локальный)
-            const proxyUrl = 'https://blumbos.onrender.com/proxy?url=' + encodeURIComponent(url);
-            console.log(proxyUrl);
+            const proxyBase = 'https://blumbos.onrender.com/proxy?url=';
+            const proxyUrl = proxyBase + encodeURIComponent(url);
 
-            // Попробуем получить HTML через fetch (требует CORS на прокси). Если fetch проходит,
-            // используем iframe.srcdoc, чтобы избежать проблем с загрузкой оригинальных заголовков.
-            fetch(proxyUrl, { method: 'GET' })
-                .then(resp => {
-                    if (!resp.ok) throw new Error('Proxy returned ' + resp.status);
-                    const ct = resp.headers.get('content-type') || '';
-                    if (ct.includes('text/html')) return resp.text();
-                    // Если не HTML, вернём null — тогда fallback будет простым src
-                    return null;
-                })
-                .then(html => {
-                    contentDiv.innerHTML = '';
-                    const iframe = document.createElement('iframe');
-                    iframe.style.width = '100%';
-                    iframe.style.height = '100%';
-                    iframe.style.border = 'none';
-                    iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts allow-forms allow-popups');
-
-                    if (html) {
-                        try {
-                            iframe.srcdoc = html;
-                            contentDiv.appendChild(iframe);
-                            return;
-                        } catch (e) {
-                            // Если srcdoc недоступен, упадём в fallback
-                        }
-                    }
-
-                    // Fallback: просто установить src на прокси
-                    iframe.src = proxyUrl;
-                    contentDiv.appendChild(iframe);
-                })
-                .catch(err => {
-                    // Если fetch запрещён (CORS) или ошибка, пробуем fallback — iframe.src
-                    contentDiv.innerHTML = '';
-                    const iframe = document.createElement('iframe');
-                    iframe.style.width = '100%';
-                    iframe.style.height = '100%';
-                    iframe.style.border = 'none';
-                    iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts allow-forms allow-popups');
-                    iframe.src = proxyUrl;
-                    contentDiv.appendChild(iframe);
-                });
+            contentDiv.innerHTML = '';
+            const iframe = document.createElement('iframe');
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.border = 'none';
+            iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts allow-forms allow-popups');
+            iframe.src = proxyUrl;
+            contentDiv.appendChild(iframe);
         }
 
         // Инициализация браузера завершена
