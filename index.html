@@ -78,7 +78,7 @@
         /* Панель задач */
         .taskbar {
             background: linear-gradient(90deg, var(--purple-90) 0%, var(--orange-90) 100%);
-            height: 40px;
+            height: 46px;
             position: fixed;
             bottom: 0;
             left: 0;
@@ -88,6 +88,7 @@
             padding: 0 20px;
             backdrop-filter: blur(10px);
             border-top: 1px solid var(--white-20);
+            z-index: 200;
         }
 
         .app-window.minimized {
@@ -168,6 +169,98 @@
             border: none;
             color: var(--white);
             font-weight: bold;
+        }
+
+        /* Start (Win) menu */
+        .start-menu {
+            position: fixed;
+            left: 16px;
+            bottom: 56px;
+            width: 380px;
+            max-width: calc(100% - 32px);
+            background: linear-gradient(180deg, rgba(20, 12, 18, 0.98), rgba(34, 18, 28, 0.96));
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            padding: 14px;
+            transform-origin: left bottom;
+            transform: translateY(10px) scale(0.98);
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 220ms cubic-bezier(.2, .9, .2, 1), opacity 180ms ease;
+            z-index: 10000;
+            color: var(--white);
+        }
+
+        .start-menu.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+
+        .start-menu .search {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .start-menu input[type="search"] {
+            flex: 1;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--white);
+            outline: none;
+        }
+
+        .start-menu .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .start-menu .app-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            padding: 8px;
+            margin: 1px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: transform 160ms ease, background 160ms ease;
+        }
+
+        .start-menu .app-btn:hover {
+            transform: translateY(-6px);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .start-menu .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .start-menu .profile {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .start-menu .power {
+            padding: 8px 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            cursor: pointer;
         }
 
         .dock {
@@ -684,6 +777,20 @@
             min-height: 560px;
         }
 
+        #paint-window {
+            display: none;
+            min-width: 840px;
+            min-height: 640px;
+            /* min-width: 520px; */
+            /* min-height: 360px; */
+        }
+
+        #paint-undo,
+        #paint-redo {
+            font-size: 1.1 rem;
+            font-style: normal;
+        }
+
         .app-window.maximized {
             border-radius: 0;
             resize: none;
@@ -1047,6 +1154,70 @@
             padding-top: 5px;
             /* padding-bottom: 5px; */
         }
+
+        /* Paint styles */
+        .paint-toolbar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 10px;
+            background: linear-gradient(90deg, var(--purple-80), var(--orange-80));
+            border-bottom: 1px solid var(--white-10);
+            min-height: 48px;
+            color: var(--white);
+            flex-wrap: wrap;
+        }
+
+        .paint-canvas-wrap {
+            padding: 12px;
+            /* background: var(--black-50); */
+            height: calc(100% - 62px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .paint-canvas {
+            background: var(--dark-3);
+            border: 2px #131314 solid;
+            border-radius: 6px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+        }
+
+        .paint-tool-btn {
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: none;
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--white);
+            cursor: pointer;
+        }
+
+        .paint-tool-btn.active {
+            background: linear-gradient(135deg, var(--orange), var(--orange-2));
+        }
+
+        .power-btn {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            transition: transform 0.3s ease, filter 0.3s ease;
+            filter: drop-shadow(0 0 5px rgba(128, 128, 128, 0.3));
+        }
+
+        .power-btn:hover {
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 10px rgb(36, 36, 36));
+        }
+
+        /* Цвет SVG иконки */
+        .power-icon {
+            fill: none;
+            stroke: #808080;
+            /* Серый цвет */
+            stroke-width: 2;
+            stroke-linecap: round;
+        }
     </style>
 </head>
 
@@ -1069,6 +1240,15 @@
             <div class="icon" style="background: linear-gradient(135deg, var(--purple-2), var(--purple-3));">⚙️</div>
             <div class="icon-text">Настройки</div>
         </div>
+        <div class="desktop-icon" onclick="openNotepad()">
+            <div class="icon"
+                style="background: linear-gradient(135deg, var(--white-20), var(--white-10)); color: #333">📝</div>
+            <div class="icon-text">Блокнот</div>
+        </div>
+        <div class="desktop-icon" onclick="openApp('paint')">
+            <div class="icon" style="background: linear-gradient(135deg, var(--orange-2), var(--orange-3));">🎨</div>
+            <div class="icon-text">Paint</div>
+        </div>
     </div>
 
     <!-- Системная информация -->
@@ -1082,8 +1262,48 @@
 
     <!-- Панель задач -->
     <div class="taskbar">
-        <button class="launcher" onclick="showNotification('Меню приложений BlumbOS!')"><img
-                src="./res/windows-svgrepo-com.svg" width="100%" height="100%" alt=""></button>
+        <button class="launcher" onclick="toggleStartMenu(event)"><img src="./res/windows-svgrepo-com.svg" width="100%"
+                height="100%" alt=""></button>
+        <!-- Start menu -->
+        <div id="start-menu" class="start-menu" aria-hidden="true">
+            <div class="search">
+                <input type="search" id="start-search" placeholder="Поиск приложений...">
+                <!-- <button onclick="closeStartMenu()" title="Закрыть">✕</button> -->
+            </div>
+            <div class="apps-grid">
+                <div class="app-btn" onclick="openApp('files')">📁<div>Файлы</div>
+                </div>
+                <div class="app-btn" onclick="openApp('browser')">🌐<div>Браузер</div>
+                </div>
+                <div class="app-btn" onclick="openApp('terminal')">💻<div>Терминал</div>
+                </div>
+                <div class="app-btn" onclick="openApp('games')">🎮<div>Игры</div>
+                </div>
+                <div class="app-btn" onclick="openApp('settings')">⚙️<div>Настройки</div>
+                </div>
+                <div class="app-btn" onclick="openNotepad()">📝<div>Блокнот</div>
+                </div>
+                <div class="app-btn" onclick="openApp('calculator')">🧮<div>Калькулятор</div>
+                </div>
+                <div class="app-btn" onclick="openApp('video')">🎵<div>Медиа</div>
+                </div>
+                <div class="app-btn" onclick="openApp('paint')">🎨<div>Paint</div>
+                </div>
+            </div>
+            <div class="footer">
+                <div class="profile">
+                    <div style="width:36px;height:36px;border-radius:8px;background:var(--white-06);"></div>
+                    <div>Гость</div>
+                </div>
+                <a href="./exit.html">
+                    <div class="power">
+                        <svg class="power-btn" viewBox="0 0 24 24" onclick="location.reload()" title="Перезагрузить">
+                            <path class="power-icon" d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10" />
+                        </svg>
+                    </div>
+                </a>
+            </div>
+        </div>
         <div class="dock">
             <div class="dock-item" onclick="openApp('files')">📁</div>
             <div class="dock-item" onclick="openApp('browser')">🌐</div>
@@ -1210,19 +1430,76 @@
             <div id="files-root"
                 style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 20px;"></div>
 
-            <!-- Редактор текстовых файлов -->
-            <div id="editor-modal"
-                style="display:none; position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index:120; background: linear-gradient(135deg, var(--dark-1) 0%, var(--dark-2) 100%); border-radius:12px; width:600px; height:400px; box-shadow:0 20px 40px rgba(0,0,0,0.6);">
-                <div
-                    style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background: linear-gradient(90deg, var(--purple), var(--orange)); border-bottom:1px solid var(--white-06);">
-                    <div id="editor-filename" style="font-weight:bold; color:var(--white)"></div>
-                    <div>
-                        <button class="button" id="editor-save">Сохранить</button>
-                        <button class="button" id="editor-close" style="background: var(--gray)">Закрыть</button>
-                    </div>
+            <!-- (notepad moved to top-level) -->
+        </div>
+        <div class="resize-handle resize-handle-top"></div>
+        <div class="resize-handle resize-handle-top-left"></div>
+        <div class="resize-handle resize-handle-top-right"></div>
+        <div class="resize-handle resize-handle-bottom"></div>
+        <div class="resize-handle resize-handle-right"></div>
+        <div class="resize-handle resize-handle-bottom-right"></div>
+        <div class="resize-handle resize-handle-left"></div>
+    </div>
+
+    <!-- Окно Блокнота (отдельное топ-уровневое окно) -->
+    <div class="app-window" id="notepad-window" style="display:none;">
+        <div class="window-header">
+            <div class="window-buttons">
+                <div class="window-button window-close"></div>
+                <div class="window-button window-minimize"></div>
+                <div class="window-button window-maximize"></div>
+            </div>
+            <div class="window-title">Блокнот</div>
+            <div style="width: 60px;"></div>
+        </div>
+        <div class="window-content" style="display:flex; flex-direction:column; height:calc(100% - 30px); padding:0;">
+            <div
+                style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background: linear-gradient(135deg, var(--dark-1) 0%, var(--dark-2) 100%); border-bottom:1px solid var(--white-06);">
+                <div id="editor-filename" style="font-weight:bold; color:var(--white)">Новый файл.txt</div>
+                <div>
+                    <button class="button" id="editor-save">Сохранить</button>
+                    <button class="button" id="editor-close" style="background: var(--gray)">Закрыть</button>
                 </div>
-                <textarea id="editor-text"
-                    style="width:100%; height:calc(100% - 52px); padding:12px; border:none; resize:none; background:var(--dark-3); color:var(--white); font-family: monospace; font-size:14px;"></textarea>
+            </div>
+            <textarea id="editor-text"
+                style="outline: none; flex:1; width:100%; padding:12px; border:none; resize:none; background:var(--dark-3); color:var(--white); font-family: monospace; font-size:14px;"></textarea>
+        </div>
+        <div class="resize-handle resize-handle-top"></div>
+        <div class="resize-handle resize-handle-top-left"></div>
+        <div class="resize-handle resize-handle-top-right"></div>
+        <div class="resize-handle resize-handle-bottom"></div>
+        <div class="resize-handle resize-handle-right"></div>
+        <div class="resize-handle resize-handle-bottom-right"></div>
+        <div class="resize-handle resize-handle-left"></div>
+    </div>
+
+    <!-- Окно Paint -->
+    <div class="app-window" id="paint-window">
+        <div class="window-header">
+            <div class="window-buttons">
+                <div class="window-button window-close" onclick="closeApp('paint')"></div>
+                <div class="window-button window-minimize" onclick="minimizeApp('paint')"></div>
+                <div class="window-button window-maximize" onclick="toggleMaximize('paint')"></div>
+            </div>
+            <div class="window-title">Paint</div>
+            <div style="width: 60px;"></div>
+        </div>
+        <div class="window-content" style="padding:0; display:flex; flex-direction:column; height:calc(100% - 30px);">
+            <div class="paint-toolbar">
+                <button class="paint-tool-btn" id="paint-undo" title="Отменить (Ctrl+Z)">←</button>
+                <button class="paint-tool-btn" id="paint-redo" title="Повтор (Ctrl+Y)">→</button>
+                <input type="color" id="paint-color" title="Выбор цвета" value="#fff">
+                <label style="color:var(--white)">Размер: <input id="paint-size" type="range" min="1" max="80" value="6"
+                        style="vertical-align:middle"></label>
+                <button class="paint-tool-btn active" id="paint-brush-normal" data-type="normal">Кисть</button>
+                <button class="paint-tool-btn" id="paint-brush-soft" data-type="soft">Мягкая</button>
+                <button class="paint-tool-btn" id="paint-eraser">Ластик</button>
+                <button class="paint-tool-btn" id="paint-fill">Заливка</button>
+                <button class="paint-tool-btn" id="paint-clear">Очистить</button>
+                <button class="paint-tool-btn" id="paint-save">Сохранить в Pictures</button>
+            </div>
+            <div class="paint-canvas-wrap">
+                <canvas id="paint-canvas" class="paint-canvas" width="800" height="480"></canvas>
             </div>
         </div>
         <div class="resize-handle resize-handle-top"></div>
@@ -1661,6 +1938,7 @@
     <!-- [НЕ ИСПОЛЬЗУЕТСЯ] Затемнение фона -->
     <!-- <div class="overlay" id="overlay" onclick="closeAllApps()"></div> -->
     <script>
+
         // Вспомогательная функция для получения CSS-переменных
         function getCSSVar(varName) {
             return getComputedStyle(document.documentElement).getPropertyValue(`--${varName}`).trim();
@@ -1686,6 +1964,62 @@
             }, 3000);
         }
 
+        // Start menu handling
+        function toggleStartMenu(e) {
+            const menu = document.getElementById('start-menu');
+            if (!menu) return;
+            if (menu.classList.contains('show')) {
+                closeStartMenu();
+            } else {
+                openStartMenu();
+                const input = document.getElementById('start-search');
+                if (input) setTimeout(() => input.focus(), 60);
+            }
+            if (e && e.stopPropagation) e.stopPropagation();
+        }
+
+        function openStartMenu() {
+            const menu = document.getElementById('start-menu');
+            if (!menu) return;
+            menu.classList.add('show');
+            menu.setAttribute('aria-hidden', 'false');
+        }
+
+        function closeStartMenu() {
+            const menu = document.getElementById('start-menu');
+            if (!menu) return;
+            menu.classList.remove('show');
+            menu.setAttribute('aria-hidden', 'true');
+            const input = document.getElementById('start-search');
+            if (input) input.value = '';
+            // restore all app buttons
+            document.querySelectorAll('#start-menu .app-btn').forEach(b => b.style.display = 'flex');
+        }
+
+        // Закрывать меню при клике вне его
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#start-menu') && !e.target.closest('.launcher')) {
+                closeStartMenu();
+            }
+        });
+
+        // Esc закрывает меню
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeStartMenu();
+        });
+
+        // Простая фильтрация приложений в меню
+        const startSearch = document.getElementById('start-search');
+        if (startSearch) {
+            startSearch.addEventListener('input', function () {
+                const q = this.value.trim().toLowerCase();
+                document.querySelectorAll('#start-menu .app-btn').forEach(b => {
+                    const txt = (b.textContent || '').toLowerCase();
+                    b.style.display = txt.includes(q) ? 'flex' : 'none';
+                });
+            });
+        }
+
         // Логика открытия/закрытия приложений
         let openWindows = [];
         let minimizedWindows = [];
@@ -1695,6 +2029,72 @@
         let snakeGame = null;
         let tetrisGame = null;
         let pongGame = null;
+        let paintInitialized = false;
+        let paintUndoStack = [];
+        let paintRedoStack = [];
+        const PAINT_UNDO_LIMIT = 50;
+
+        function pushPaintState() {
+            const canvas = document.getElementById('paint-canvas');
+            if (!canvas) return;
+            try {
+                const data = canvas.toDataURL('image/png');
+                const last = paintUndoStack.length ? paintUndoStack[paintUndoStack.length - 1] : null;
+                if (last === data) return; // не добавляем дубликаты
+                paintUndoStack.push(data);
+                if (paintUndoStack.length > PAINT_UNDO_LIMIT) paintUndoStack.shift();
+                // очистим redo при новой записи
+                paintRedoStack = [];
+                updatePaintUndoRedoButtons();
+            } catch (e) { console.error('pushPaintState error', e); }
+        }
+
+        function restorePaintState(dataURL) {
+            const canvas = document.getElementById('paint-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            img.onload = function () {
+                canvas.width = Math.max(400, img.naturalWidth);
+                canvas.height = Math.max(300, img.naturalHeight);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight);
+            };
+            img.src = dataURL;
+        }
+
+        function undoPaint() {
+            if (paintUndoStack.length === 0) return;
+            const canvas = document.getElementById('paint-canvas');
+            if (!canvas) return;
+            try {
+                const current = canvas.toDataURL('image/png');
+                const prev = paintUndoStack.pop();
+                paintRedoStack.push(current);
+                restorePaintState(prev);
+                updatePaintUndoRedoButtons();
+            } catch (e) { console.error('undoPaint', e); }
+        }
+
+        function redoPaint() {
+            if (paintRedoStack.length === 0) return;
+            const canvas = document.getElementById('paint-canvas');
+            if (!canvas) return;
+            try {
+                const current = canvas.toDataURL('image/png');
+                const next = paintRedoStack.pop();
+                paintUndoStack.push(current);
+                restorePaintState(next);
+                updatePaintUndoRedoButtons();
+            } catch (e) { console.error('redoPaint', e); }
+        }
+
+        function updatePaintUndoRedoButtons() {
+            const btnU = document.getElementById('paint-undo');
+            const btnR = document.getElementById('paint-redo');
+            if (btnU) btnU.disabled = paintUndoStack.length === 0;
+            if (btnR) btnR.disabled = paintRedoStack.length === 0;
+        }
 
         function openApp(appName) {
             // Проверяем существование окна
@@ -1764,6 +2164,10 @@
                 // Если открыли файловый менеджер — рендерим текущую папку
                 if (appName === 'files') {
                     renderCurrentFolder();
+                }
+                // Инициализируем Paint при открытии
+                if (appName === 'paint') {
+                    setTimeout(() => { try { initPaint(); } catch (e) { console.error(e); } }, 80);
                 }
             }
         }
@@ -2056,6 +2460,7 @@
                 speedTesting: '⏳ Тестирование скорости...',
                 speedResult: '📊 Скорость: {download} Мбит/с ↓ | {upload} Мбит/с ↑',
                 networkInfo: 'IP: {ip}<br>Пакеты: {packets} отправлено<br>Задержка: {latency} мс',
+                notepad: 'Блокнот',
                 asciiWelcome: 'Добро пожаловать в BlumbOS!'
             },
             en: {
@@ -2165,6 +2570,7 @@
                 speedTesting: '⏳ Testing speed...',
                 speedResult: '📊 Speed: {download} Mbps ↓ | {upload} Mbps ↑',
                 networkInfo: 'IP: {ip}<br>Packets: {packets} sent<br>Latency: {latency} ms',
+                notepad: 'Notepad',
                 asciiWelcome: 'Welcome to BlumbOS!'
             },
             es: {
@@ -2274,6 +2680,7 @@
                 speedTesting: '⏳ Probando velocidad...',
                 speedResult: '📊 Velocidad: {download} Mbps ↓ | {upload} Mbps ↑',
                 networkInfo: 'IP: {ip}<br>Paquetes: {packets} enviados<br>Latencia: {latency} ms',
+                notepad: 'Bloc de notas',
                 asciiWelcome: '¡Bienvenido a BlumbOS!'
             }
         };
@@ -2340,14 +2747,17 @@
             document.querySelectorAll('.desktop-icon .icon-text')[1].textContent = t.browser;
             document.querySelectorAll('.desktop-icon .icon-text')[2].textContent = t.games;
             document.querySelectorAll('.desktop-icon .icon-text')[3].textContent = t.settings;
+            // Блокнот (четвёртая иконка после настроек)
+            if (document.querySelectorAll('.desktop-icon .icon-text')[4]) document.querySelectorAll('.desktop-icon .icon-text')[4].textContent = t.notepad;
             // Панель задач
-            document.querySelector('.launcher').setAttribute('onclick', `showNotification('${t.taskbarMenu}')`);
+            document.querySelector('.launcher').setAttribute('onclick', 'toggleStartMenu(event)');
             // Окна
             document.querySelector('#files-window .window-title').textContent = t.fileManager;
             document.getElementById('files-title').textContent = t.homeFolder;
             document.getElementById('btn-new-folder').textContent = t.newFolder;
             document.getElementById('btn-new-file').textContent = t.newFile;
             document.getElementById('btn-up').textContent = t.back;
+            if (document.querySelector('#notepad-window .window-title')) document.querySelector('#notepad-window .window-title').textContent = t.notepad;
             document.querySelector('#calculator-window .window-title').textContent = t.calculator;
             document.querySelector('#games-window .window-title').textContent = t.gamesWindow;
             document.querySelector('#games-menu h3').textContent = t.selectGame;
@@ -2453,14 +2863,14 @@
                     div.textContent = t.folderEmpty;
                 }
             });
-            // Модальные окна редактора
-            const editorModal = document.getElementById('editor-modal');
-            if (editorModal) {
-                const saveBtn = editorModal.querySelector('#editor-save');
+            // Окно блокнота
+            const notepadWindow = document.getElementById('notepad-window');
+            if (notepadWindow) {
+                const saveBtn = notepadWindow.querySelector('#editor-save');
                 if (saveBtn) saveBtn.textContent = t.editorSave;
-                const closeBtn = editorModal.querySelector('#editor-close');
+                const closeBtn = notepadWindow.querySelector('#editor-close');
                 if (closeBtn) closeBtn.textContent = t.editorClose;
-                const textarea = editorModal.querySelector('#editor-text');
+                const textarea = notepadWindow.querySelector('#editor-text');
                 if (textarea) textarea.placeholder = t.editorPlaceholder;
             }
         }
@@ -3923,6 +4333,22 @@
                 if (item.type === 'folder') {
                     contentDiv.innerHTML = `<div style=\"font-size:28px;margin-bottom:6px\">📁</div><div style=\"font-size:13px;text-align:center\">${name}</div>`;
                     contentDiv.onclick = () => { openFolder(name); };
+                } else if (item.type === 'image') {
+                    // изображение — показываем превью и открываем в Paint
+                    const thumb = document.createElement('img');
+                    thumb.src = item.data || '';
+                    thumb.style.width = '72px';
+                    thumb.style.height = '72px';
+                    thumb.style.objectFit = 'cover';
+                    thumb.style.borderRadius = '6px';
+                    thumb.style.marginBottom = '6px';
+                    const label = document.createElement('div');
+                    label.style.fontSize = '13px';
+                    label.style.textAlign = 'center';
+                    label.textContent = name;
+                    contentDiv.appendChild(thumb);
+                    contentDiv.appendChild(label);
+                    contentDiv.onclick = () => { openImageInPaint(name); };
                 } else {
                     contentDiv.innerHTML = `<div style=\"font-size:28px;margin-bottom:6px\">📄</div><div style=\"font-size:13px;text-align:center\">${name}</div>`;
                     contentDiv.onclick = () => { openTextFile(name); };
@@ -4009,20 +4435,42 @@
             editingFile = { node, name };
             document.getElementById('editor-filename').textContent = name;
             document.getElementById('editor-text').value = file.content || '';
-            document.getElementById('editor-modal').style.display = 'block';
+            // Открываем окно блокнота и ставим фокус
+            openApp('notepad');
+            setTimeout(() => {
+                const ta = document.getElementById('editor-text');
+                if (ta) { ta.focus(); ta.selectionStart = ta.value.length; }
+            }, 50);
         }
 
         function saveEditor() {
-            if (!editingFile) return;
             const text = document.getElementById('editor-text').value;
-            editingFile.node.children[editingFile.name].content = text;
-            document.getElementById('editor-modal').style.display = 'none';
-            editingFile = null;
+            // Если открыт файл из VFS — перезаписываем
+            if (editingFile) {
+                editingFile.node.children[editingFile.name].content = text;
+                closeApp('notepad');
+                editingFile = null;
+                showNotification('Файл сохранён');
+                return;
+            }
+
+            // Иначе — сохраняем как новый файл в текущую папку
+            const name = prompt('Введите имя файла для сохранения (например note.txt):');
+            if (!name) return;
+            const node = getNodeByPath(currentPath) || vfs;
+            if (!node.children) node.children = {};
+            if (node.children[name]) {
+                const ok = confirm('Файл существует. Перезаписать?');
+                if (!ok) return;
+            }
+            node.children[name] = { type: 'file', content: text };
+            closeApp('notepad');
+            renderCurrentFolder();
             showNotification('Файл сохранён');
         }
 
         function closeEditor() {
-            document.getElementById('editor-modal').style.display = 'none';
+            closeApp('notepad');
             editingFile = null;
         }
 
@@ -4050,11 +4498,166 @@
         }
 
 
-        // ... существующий код ...
+        // Paint: функции для рисования, загрузки и сохранения изображений
+        function openImageInPaint(name) {
+            // открывает изображение из текущей папки в Paint
+            const node = getNodeByPath(currentPath) || vfs;
+            let item = node.children && node.children[name];
+            // если не в текущей папке — попытаемся найти в Pictures
+            if (!item) {
+                const pics = getNodeByPath(['Pictures']);
+                if (pics && pics.children && pics.children[name]) item = pics.children[name];
+            }
+            if (!item || item.type !== 'image') { showNotification('Изображение не найдено'); return; }
+            openApp('paint');
+            setTimeout(() => {
+                const canvas = document.getElementById('paint-canvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                img.onload = function () {
+                    // подгоняем размер холста под изображение, но ограничим
+                    const maxW = Math.max(400, Math.min(img.naturalWidth, window.innerWidth - 200));
+                    const maxH = Math.max(300, Math.min(img.naturalHeight, window.innerHeight - 180));
+                    canvas.width = maxW;
+                    canvas.height = maxH;
+                    // сохраняем предыдущее состояние для undo
+                    try { pushPaintState(); } catch (e) { }
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    // сохраняем пропорции
+                    const ratio = Math.min(canvas.width / img.naturalWidth, canvas.height / img.naturalHeight);
+                    const w = img.naturalWidth * ratio;
+                    const h = img.naturalHeight * ratio;
+                    ctx.drawImage(img, 0, 0, w, h);
+                };
+                img.src = item.data;
+            }, 80);
+        }
+
+        function initPaint() {
+            if (paintInitialized) return;
+            const canvas = document.getElementById('paint-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let drawing = false;
+            let lastX = 0, lastY = 0;
+            let brushType = 'normal';
+            let eraser = false;
+
+            const colorInput = document.getElementById('paint-color');
+            const sizeInput = document.getElementById('paint-size');
+            const btnNormal = document.getElementById('paint-brush-normal');
+            const btnSoft = document.getElementById('paint-brush-soft');
+            const btnEraser = document.getElementById('paint-eraser');
+            const btnFill = document.getElementById('paint-fill');
+            const btnClear = document.getElementById('paint-clear');
+            const btnSave = document.getElementById('paint-save');
+
+            function setBrushSettings() {
+                ctx.lineJoin = 'round';
+                ctx.lineCap = 'round';
+                ctx.lineWidth = parseInt(sizeInput.value, 10) || 6;
+                ctx.globalCompositeOperation = eraser ? 'destination-out' : 'source-over';
+                ctx.strokeStyle = colorInput.value || '#ссс';
+                if (brushType === 'soft' && !eraser) {
+                    ctx.shadowColor = ctx.strokeStyle;
+                    ctx.shadowBlur = Math.max(1, ctx.lineWidth * 0.9);
+                } else {
+                    ctx.shadowBlur = 0;
+                }
+            }
+
+            function pointerDown(e) {
+                // сохраняем состояние перед началом рисования
+                pushPaintState();
+                drawing = true;
+                const rect = canvas.getBoundingClientRect();
+                lastX = (e.clientX || e.touches && e.touches[0].clientX) - rect.left;
+                lastY = (e.clientY || e.touches && e.touches[0].clientY) - rect.top;
+                setBrushSettings();
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+            }
+
+            function pointerMove(e) {
+                if (!drawing) return;
+                const rect = canvas.getBoundingClientRect();
+                const x = (e.clientX || e.touches && e.touches[0].clientX) - rect.left;
+                const y = (e.clientY || e.touches && e.touches[0].clientY) - rect.top;
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                lastX = x; lastY = y;
+            }
+
+            function pointerUp() { drawing = false; ctx.closePath(); }
+
+            canvas.addEventListener('pointerdown', pointerDown);
+            canvas.addEventListener('pointermove', pointerMove);
+            canvas.addEventListener('pointerup', pointerUp);
+            canvas.addEventListener('pointerleave', pointerUp);
+
+            // toolbar
+            btnNormal.addEventListener('click', function () { brushType = 'normal'; btnNormal.classList.add('active'); btnSoft.classList.remove('active'); eraser = false; btnEraser.classList.remove('active'); });
+            btnSoft.addEventListener('click', function () { brushType = 'soft'; btnSoft.classList.add('active'); btnNormal.classList.remove('active'); eraser = false; btnEraser.classList.remove('active'); });
+            btnEraser.addEventListener('click', function () { eraser = !eraser; btnEraser.classList.toggle('active'); });
+            btnFill.addEventListener('click', function () { pushPaintState(); ctx.save(); ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = colorInput.value || '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.restore(); updatePaintUndoRedoButtons(); });
+            btnClear.addEventListener('click', function () { const ok = confirm('Очистить холст?'); if (!ok) return; pushPaintState(); ctx.clearRect(0, 0, canvas.width, canvas.height); updatePaintUndoRedoButtons(); });
+            btnSave.addEventListener('click', function () { savePaintToVFS(); });
+
+            const btnUndo = document.getElementById('paint-undo');
+            const btnRedo = document.getElementById('paint-redo');
+            if (btnUndo) btnUndo.addEventListener('click', undoPaint);
+            if (btnRedo) btnRedo.addEventListener('click', redoPaint);
+
+            // keyboard shortcuts for active paint window
+            document.addEventListener('keydown', function (e) {
+                const pw = document.getElementById('paint-window');
+                if (!pw || !pw.classList.contains('active')) return;
+                const key = e.key || e.keyCode;
+                if ((e.ctrlKey || e.metaKey) && !e.shiftKey && (key === 'z' || key === 'Z')) {
+                    e.preventDefault(); undoPaint();
+                } else if ((e.ctrlKey || e.metaKey) && ((key === 'y' || key === 'Y') || (e.shiftKey && (key === 'Z' || key === 'z')))) {
+                    e.preventDefault(); redoPaint();
+                }
+            });
+
+            // изменить размер кисти/color рефреш
+            sizeInput.addEventListener('input', setBrushSettings);
+            colorInput.addEventListener('input', setBrushSettings);
+
+            // Инициалные параметры
+            setBrushSettings();
+            paintInitialized = true;
+        }
+
+        function savePaintToVFS() {
+            const canvas = document.getElementById('paint-canvas');
+            if (!canvas) return;
+            const data = canvas.toDataURL('image/png');
+            const pics = getNodeByPath(['Pictures']) || vfs.children['Pictures'];
+            if (!pics.children) pics.children = {};
+            const defaultName = `drawing-${(new Date()).toISOString().replaceAll(':', '').replaceAll('.', '')}.png`;
+            const name = prompt('Сохранить как (имя файла):', defaultName);
+            if (!name) return;
+            pics.children[name] = { type: 'image', data };
+            showNotification('Изображение сохранено в Pictures');
+            // если сейчас смотрим Pictures — обновим список
+            if ((currentPath.length === 1 && currentPath[0] === 'Pictures') || currentPath.length === 0) renderCurrentFolder();
+        }
 
         // Функция для показа терминала
         function showTerminal() {
             openApp('terminal');
+        }
+
+        // Открыть блокнот (интегрирован с файловым менеджером)
+        function openNotepad() {
+            // Открываем отдельное окно блокнота
+            editingFile = null;
+            document.getElementById('editor-filename').textContent = 'Новый файл.txt';
+            const ta = document.getElementById('editor-text');
+            if (ta) ta.value = '';
+            openApp('notepad');
+            setTimeout(() => { if (ta) { ta.focus(); ta.selectionStart = ta.value.length; } }, 50);
         }
 
         // Функция для скрытия терминала при клике на рабочий стол
@@ -4111,10 +4714,30 @@
 
             window.addEventListener('keydown', function (e) {
                 const key = e.key;
-                if (key === 'Enter') { e.preventDefault(); evaluateExpression(); return; }
-                if (key === 'Backspace') { e.preventDefault(); backspace(); return; }
-                if (key === 'Escape') { e.preventDefault(); clearDisplay(); return; }
-                if (/^[0-9.+\-*/()%]$/.test(key)) { appendToDisplay(key); }
+                const active = document.activeElement;
+                const activeTag = active ? active.tagName : null;
+
+                // Если фокус в обычном текстовом поле/textarea — не перехватываем Enter/Backspace
+                if (key === 'Enter') {
+                    if (activeTag === 'TEXTAREA') return; // разрешаем перенос строки в редакторе
+                    e.preventDefault(); evaluateExpression(); return;
+                }
+
+                if (key === 'Backspace') {
+                    if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return; // позволяем редактировать поля
+                    e.preventDefault(); backspace(); return;
+                }
+
+                if (key === 'Escape') {
+                    if (activeTag === 'TEXTAREA' || activeTag === 'INPUT') return;
+                    e.preventDefault(); clearDisplay(); return;
+                }
+
+                // Числа и операторы — не обрабатываем если фокус в полях ввода
+                if (/^[0-9.+\-*/()%]$/.test(key)) {
+                    if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return;
+                    appendToDisplay(key);
+                }
             });
         }
 
@@ -4231,6 +4854,10 @@
             renderCurrentFolder();
             // Инициализация калькулятора
             initCalculator();
+            // Инициализация Paint (подготовка обработчиков)
+            try { initPaint(); } catch (e) { /* ignore until paint opened */ }
+            // Инициализация Paint
+            try { initPaint(); } catch (e) { console.error('initPaint error', e); }
 
             // Закрывать любые открытые меню при клике вне
             document.addEventListener('click', function () {

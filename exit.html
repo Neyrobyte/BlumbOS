@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система выключена</title>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #0a0a0a;
+            display: flex;
+            flex-direction: column;
+            /* Элементы друг под другом */
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        /* Контейнер для кнопки сверху */
+        .top-controls {
+            position: absolute;
+            top: 100px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            opacity: 0;
+            animation: fadeIn 1.5s ease-out 0.5s forwards;
+            /* Появляется чуть позже текста */
+        }
+
+        .power-btn {
+            width: 60px;
+            height: 60px;
+            cursor: pointer;
+            transition: transform 0.3s ease, filter 0.3s ease;
+            filter: drop-shadow(0 0 5px rgba(128, 128, 128, 0.3));
+        }
+
+        .power-btn:hover {
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+        }
+
+        /* Цвет SVG иконки */
+        .power-icon {
+            fill: none;
+            stroke: #808080;
+            /* Серый цвет */
+            stroke-width: 2;
+            stroke-linecap: round;
+        }
+
+        /* Контейнер с текстом */
+        .shutdown-container {
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 1.5s ease-out forwards;
+        }
+
+        .status-text {
+            color: #1aff1a;
+            font-size: 7vh;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(26, 255, 26, 0.5);
+        }
+
+        /* Анимация плавного проявления */
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 12px;
+            height: 1.8rem;
+            background-color: #1aff1a;
+            vertical-align: middle;
+            margin-left: 8px;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        /* Эффект CRT монитора */
+        .crt-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 10;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="crt-overlay"></div>
+
+    <div class="top-controls">
+        <a href="./index.html">
+            <svg class="power-btn" viewBox="0 0 24 24" onclick="location.reload()" title="Перезагрузить">
+                <path class="power-icon" d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10" />
+            </svg>
+        </a>
+    </div>
+
+    <div class="shutdown-container">
+        <div class="status-text">
+            Система выключена<span class="cursor"></span>
+        </div>
+    </div>
+
+</body>
+
+</html>
