@@ -53,6 +53,10 @@
 
             /* Прочие */
             --black-50: rgba(0, 0, 0, 0.5);
+
+            /* Launcher (кнопка Пуск) - цвета по умолчанию */
+            --launcher-color-1: var(--orange-2);
+            --launcher-color-2: var(--purple);
         }
 
         * {
@@ -157,18 +161,38 @@
         }
 
         .launcher {
-            background: linear-gradient(135deg, var(--orange-2), var(--orange));
-            width: 35px;
-            height: 35px;
+            background: linear-gradient(135deg, var(--white-20), var(--white-10));
+            width: 40px;
+            height: 40px;
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin-right: 15px;
             cursor: pointer;
-            border: none;
-            color: var(--white);
+            border: 1.7px solid var(--white-10);
+            border-radius: 8px;
+            color: var(--dark-2);
             font-weight: bold;
+            padding: 4px;
+        }
+
+        .launcher svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+            color: var(--dark-3);
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
+            transform-origin: center center;
+            transition: transform 190ms cubic-bezier(.2, .9, .2, 1), filter 140ms ease;
+            transition: all 0.3s;
+
+        }
+
+        .launcher:hover svg,
+        .launcher:focus svg {
+            transform: scale(1.18);
+            filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5));
         }
 
         /* Start (Win) menu */
@@ -272,13 +296,13 @@
             width: 35px;
             height: 35px;
             background: linear-gradient(135deg, var(--white-20), var(--white-10));
-            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             transition: all 0.3s ease;
             border: 1px solid var(--white-10);
+            border-radius: 8px;
         }
 
         .dock-item:hover {
@@ -705,8 +729,13 @@
         }
 
         .game-selector {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            /* display: grid; */
+            display: flex;
+            justify-content: center;
+            align-content: center;
+            /* align-items: center; */
+            /* vertical-align: middle; */
+            /* grid-template-columns: repeat(2, 1fr); */
             gap: 15px;
             margin-top: 20px;
         }
@@ -718,6 +747,9 @@
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
+            /* min-width: 180px; */
+            /* max-width: 220px; */
+            width: 200px;
         }
 
         .game-card:hover {
@@ -759,7 +791,7 @@
         /* Для окон с играми увеличим минимальную высоту */
         #games-window {
             min-width: 500px;
-            min-height: 500px;
+            min-height: 400px;
         }
 
         #video-window {
@@ -787,7 +819,7 @@
 
         #paint-undo,
         #paint-redo {
-            font-size: 1.1 rem;
+            font-size: 1.1rem;
             font-style: normal;
         }
 
@@ -1262,8 +1294,28 @@
 
     <!-- Панель задач -->
     <div class="taskbar">
-        <button class="launcher" onclick="toggleStartMenu(event)"><img src="./res/windows-svgrepo-com.svg" width="100%"
-                height="100%" alt=""></button>
+        <button class="launcher" onclick="toggleStartMenu(event)">
+            <svg viewBox="-143 145 512 512" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                <defs>
+                    <linearGradient id="launcher-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="var(--launcher-color-1)" />
+                        <stop offset="100%" stop-color="var(--launcher-color-2)" />
+                    </linearGradient>
+                </defs>
+                <g fill="currentColor">
+                    <path
+                        d="M76.6,488.2c4.9-16.5,21.4-72.9,24.5-83.7c-3.5-2.2-7.1-4.4-10.9-6.5c-8.8-4.5-21.1-9.2-34.6-9.2c-1.5,0-3.1,0.1-4.6,0.2
+        c-13.5,1.1-25.8,4.6-34.5,7.6c-2.5,0.9-5.2,1.9-7.9,3L-15,481.8c17.9-7.2,32.4-10.1,44.5-10.1C49.6,471.7,63.5,479.5,76.6,488.2z" />
+                    <path d="M115.3,414.9l-23.6,82c0,0,27.6,17,48.4,17c13.1,0,28.8-3.2,48.5-11.3l22.8-79.6c-17.3,6.2-32.2,8.5-44.7,8.5
+        C139.1,431.6,122.5,420.7,115.3,414.9z" />
+                    <path d="M60.1,369.1c19.2,0.2,32.8,7.9,45.5,16.3c4.8-16.4,19.2-65.8,24.1-82.5v-0.1c0,0-17-10.2-28.8-13.2
+        c-5.6-1.3-12-2.2-19.1-2.2c-0.1,0-0.2,0-0.3,0c-12,0.2-26.4,3.1-44.1,10.4l-23.3,82c18.2-7.4,32.9-10.7,45.3-10.7
+        C59.6,369.1,59.8,369.1,60.1,369.1z" />
+                    <path d="M120.9,396.5c13.2,8.8,30.3,15.9,50.9,15.9c13.6,0,28.8-3.1,45.4-10.9v-0.1c0,0,0.1,0,0.2-0.1L241,320
+        c-17.4,7.6-32.7,10.4-45.8,10.4c-26,0-43.1-11-50.6-16.9l-23.9,82.8C120.7,396.3,120.8,396.4,120.9,396.5z" />
+                </g>
+            </svg>
+        </button>
         <!-- Start menu -->
         <div id="start-menu" class="start-menu" aria-hidden="true">
             <div class="search">
@@ -1636,7 +1688,7 @@
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <label class="toggle-switch">
                             <input type="checkbox" class="toggle-checkbox" onchange="toggleAutostart(this.checked)">
-                            <span style="size: 0px;" class="toggle-slider"></span>
+                            <span class="toggle-slider"></span>
                         </label>
                         <span>Запускать BlumbOS при включении</span>
                     </div>
@@ -1749,10 +1801,10 @@
             <div class="window-title">Игры BlumbOS</div>
             <div style="width: 60px;"></div>
         </div>
-        <div class="window-content">
+        <div style="padding-top: 10%; padding-bottom: 5%;" class="window-content">
             <div id="games-menu">
-                <h3>Выберите игру</h3>
                 <div class="game-selector">
+                    <h3 style="padding: 0; margin: 0; position: fixed; top: 3.6rem;">Выберите игру</h3>
                     <div class="game-card" onclick="startGame('snake')">
                         <div style="font-size: 32px;">🐍</div>
                         <div>Змейка</div>
@@ -1761,6 +1813,8 @@
                         <div style="font-size: 32px;">🧊</div>
                         <div>Тетрис</div>
                     </div>
+                </div>
+                <div class="game-selector">
                     <div class="game-card" onclick="startGame('pong')">
                         <div style="font-size: 32px;">🎾</div>
                         <div>Понг</div>
@@ -3052,10 +3106,21 @@
                 root.style.setProperty(key, map[key]);
             });
 
-            // Обновляем launcher (кнопка меню) на панели задач
+            // Добавим/обновим цвета для иконки launcher
+            const launcherColorMap = {
+                orange: ['var(--white-20)', 'var(--white-10)'],
+                purple: ['var(--purple-2)', 'var(--purple)'],
+                blue: ['var(--blue-2)', 'var(--blue-1)'],
+                dark: ['var(--white-25)', 'var(--white-20)']
+            };
+            const lc = launcherColorMap[theme] || launcherColorMap.orange;
+            root.style.setProperty('--launcher-color-1', lc[0]);
+            root.style.setProperty('--launcher-color-2', lc[1]);
+
+            // Обновляем launcher (кнопка меню) на панели задач — фон через CSS-переменные
             const launcherEl = document.querySelector('.launcher');
             if (launcherEl) {
-                launcherEl.style.background = (desktopIconThemes[theme] && desktopIconThemes[theme][0]) || headerThemes[theme];
+                launcherEl.style.background = `linear-gradient(135deg, var(--launcher-color-1), var(--launcher-color-2))`;
             }
 
             if (!suppressNotify) showNotification(`Тема изменена на: ${theme}`);
