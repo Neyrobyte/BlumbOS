@@ -281,10 +281,11 @@
         }
 
         .start-menu .power {
-            padding: 8px 10px;
+            padding: 8px 8px;
             background: rgba(255, 255, 255, 0.03);
             border-radius: 8px;
             cursor: pointer;
+
         }
 
         .dock {
@@ -1230,6 +1231,8 @@
         }
 
         .power-btn {
+            padding: 0;
+            margin: 0;
             width: 20px;
             height: 20px;
             cursor: pointer;
@@ -1244,6 +1247,8 @@
 
         /* Цвет SVG иконки */
         .power-icon {
+            margin: 0;
+            padding: 0;
             fill: none;
             stroke: #808080;
             /* Серый цвет */
@@ -1257,29 +1262,46 @@
     <!-- Рабочий стол -->
     <div class="desktop">
         <div class="desktop-icon" onclick="openApp('files')">
-            <div class="icon" style="background: linear-gradient(135deg, var(--orange), var(--orange-2));">📁</div>
+            <div class="icon" style="background: linear-gradient(135deg, var(--orange), var(--orange-2));">
+                <img src="./res/folder.png" width="55%" height="55%" alt="">
+            </div>
             <div class="icon-text">Файлы</div>
         </div>
         <div class="desktop-icon" onclick="openApp('browser')">
-            <div class="icon" style="background: linear-gradient(135deg, var(--purple), var(--purple-2));">🌐</div>
-            <div class="icon-text">Браузер</div>
+            <div class="icon" style="background: linear-gradient(135deg, var(--purple), var(--purple-2));">
+                <img src="./res/browser.png" width="60%" height="60% alt="">
+            </div>
+            <div class=" icon-text">Браузер
+            </div>
         </div>
         <div class="desktop-icon" onclick="openApp('games')">
-            <div class="icon" style="background: linear-gradient(135deg, var(--orange-2), var(--orange-3));">🎮</div>
-            <div class="icon-text">Игры</div>
+            <div class="icon" style="background: linear-gradient(135deg, var(--orange-2), var(--orange-3));">
+                <img src="./res/games.png" width="60%" height="60% alt="">
+            </div>
+            <div class=" icon-text">Игры
+            </div>
         </div>
         <div class="desktop-icon" onclick="openApp('settings')">
-            <div class="icon" style="background: linear-gradient(135deg, var(--purple-2), var(--purple-3));">⚙️</div>
-            <div class="icon-text">Настройки</div>
+            <div class="icon" style="background: linear-gradient(135deg, var(--purple-2), var(--purple-3));">
+                <img src="./res/settings.png" width="60%" height="60% alt="">
+            </div>
+            <div class=" icon-text">Настройки
+            </div>
         </div>
         <div class="desktop-icon" onclick="openNotepad()">
             <div class="icon"
-                style="background: linear-gradient(135deg, var(--white-20), var(--white-10)); color: #333">📝</div>
-            <div class="icon-text">Блокнот</div>
+                style="background: linear-gradient(135deg, var(--white-20), var(--white-10)); color: #333">
+                <img src="./res/notepad-1.png" width="55%" height="55% alt="">
+            </div>
+            <div class=" icon-text">Блокнот
+            </div>
         </div>
         <div class="desktop-icon" onclick="openApp('paint')">
-            <div class="icon" style="background: linear-gradient(135deg, var(--orange-2), var(--orange-3));">🎨</div>
-            <div class="icon-text">Paint</div>
+            <div class="icon" style="background: linear-gradient(135deg, var(--orange-2), var(--orange-3));">
+                <img src="./res/paint-1.png" width="55%" height="55% alt="">
+            </div>
+            <div class=" icon-text">Paint
+            </div>
         </div>
     </div>
 
@@ -1344,11 +1366,14 @@
             </div>
             <div class="footer">
                 <div class="profile">
-                    <div style="width:36px;height:36px;border-radius:8px;background:var(--white-06);"></div>
+                    <div
+                        style="display: flex; justify-content: center; align-items: center; width:36px; height:36px; border-radius:8px; background:var(--white-06);">
+                        <img src="./res/user-prifile.svg" width="50%" height="50%" alt="">
+                    </div>
                     <div>Гость</div>
                 </div>
                 <a href="./exit.html">
-                    <div class="power">
+                    <div style="width: 36px; height: 36px;" class="power">
                         <svg class="power-btn" viewBox="0 0 24 24" onclick="location.reload()" title="Перезагрузить">
                             <path class="power-icon" d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10" />
                         </svg>
@@ -1357,12 +1382,24 @@
             </div>
         </div>
         <div class="dock">
-            <div class="dock-item" onclick="openApp('files')">📁</div>
-            <div class="dock-item" onclick="openApp('browser')">🌐</div>
-            <div class="dock-item" onclick="openApp('terminal')">💻</div>
-            <div class="dock-item" onclick="openApp('calculator')">🧮</div>
-            <div class="dock-item" onclick="openApp('video')">🎵</div>
-            <div class="dock-item" onclick="showNotification('Камера еще не реализована!')">📷</div>
+            <div class="dock-item" onclick="openApp('files')">
+                <img src="./res/folder.png" width="55%" height="55%" alt="">
+            </div>
+            <div class="dock-item" onclick="openApp('browser')">
+                <img src="./res/browser.png" width="60%" height="60% alt="">
+            </div>
+            <div class="dock-item" onclick="openApp('terminal')">
+                <img src="./res/terminal.png" width="75%" height="75% alt="">
+            </div>
+            <div class="dock-item" onclick="openApp('calculator')">
+                <img src="./res/calculator-2.png" width="60%" height="60% alt="">
+            </div>
+            <div class="dock-item" onclick="openApp('video')">
+                <img src="./res/videoplayer.png" width="70%" height="70% alt="">
+            </div>
+            <div class="dock-item" onclick="showNotification('Переводчик еще не реализован')">
+                <img src="./res/translator.svg" width="70%" height="70% alt="">
+            </div>
             <div class="taskbarr" id="taskbar-apps"></div>
         </div>
     </div>
